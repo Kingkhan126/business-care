@@ -1,0 +1,342 @@
+// Database: SQLite for standalone local execution
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("CUSTOMER") // CUSTOMER | PHARMACIST | ADMIN
+  phone        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  addresses             Address[]
+  orders                Order[]
+  prescriptions         Prescription[]         @relation("CustomerPrescriptions")
+  reviewedPrescriptions Prescription[]         @relation("PharmacistReviews")
+  prescriptionAuditLogs PrescriptionAuditLog[]
+  cartItems             CartItem[]
+  wishlistItems         WishlistItem[]
+  refillReminders       RefillReminder[]
+  reviews               Review[]
+  supportTickets        SupportTicket[]
+  ticketMessages        TicketMessage[]
+  auditLogs             AuditLog[]             @relation("ActorAuditLogs")
+
+  @@index([email])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  parentId    String?
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent   Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  children Category[] @relation("SubCategories")
+  products Product[]
+
+  @@index([slug])
+}
+
+model Brand {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  description String?
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+
+  @@index([slug])
+}
+
+model Product {
+  id                     String   @id @default(cuid())
+  name                   String
+  slug                   String   @unique
+  description            String
+  sku                    String   @unique
+  price                  Float
+  salePrice              Float?
+  stockQuantity          Int      @default(0)
+  isPrescriptionRequired Boolean  @default(false)
+  dosageForm             String?  // e.g. Tablet, Syrup, Cream, Ointment, Capsule
+  activeIngredients      String?
+  usageInstructions      String?
+  warnings               String?
+  imageUrl               String?
+  categoryId             String
+  brandId                String?
+  ratingAverage          Float    @default(0)
+  ratingCount            Int      @default(0)
+  isFeatured             Boolean  @default(false)
+  isVisible              Boolean  @default(true) // Admin hide/show toggle
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  category        Category         @relation(fields: [categoryId], references: [id])
+  brand           Brand?           @relation(fields: [brandId], references: [id])
+  cartItems       CartItem[]
+  wishlistItems   WishlistItem[]
+  orderItems      OrderItem[]
+  refillReminders RefillReminder[]
+  reviews         Review[]
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([slug])
+  @@index([sku])
+}
+
+model Prescription {
+  id              String    @id @default(cuid())
+  userId          String
+  patientName     String
+  patientAge      Int?
+  fileUrl         String
+  fileName        String
+  fileMimeType    String
+  status          String    @default("PENDING_REVIEW") // PENDING_REVIEW | UNDER_PHARMACIST_REVIEW | APPROVED | REJECTED | CLARIFICATION_REQUESTED
+  pharmacistNotes String?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  orderId         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user       User                   @relation("CustomerPrescriptions", fields: [userId], references: [id])
+  reviewedBy User?                  @relation("PharmacistReviews", fields: [reviewedById], references: [id])
+  auditLogs  PrescriptionAuditLog[]
+  orders     Order[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model PrescriptionAuditLog {
+  id             String   @id @default(cuid())
+  prescriptionId String
+  actorId        String
+  oldStatus      String?
+  newStatus      String
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  actor        User         @relation(fields: [actorId], references: [id])
+
+  @@index([prescriptionId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  fullName  String
+  phone     String
+  street    String
+  city      String
+  state     String
+  zipCode   String
+  country   String   @default("USA")
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+}
+
+model Order {
+  id                  String   @id @default(cuid())
+  orderNumber         String   @unique
+  userId              String
+  addressId           String?
+  shippingAddressJson String
+  status              String   @default("PENDING") // PENDING | PRESCRIPTION_VERIFICATION | PROCESSING | SHIPPED | DELIVERED | CANCELLED
+  paymentStatus       String   @default("PENDING") // PENDING | PAID | FAILED | REFUNDED
+  paymentMethod       String   @default("CARD") // CARD | CASH_ON_DELIVERY | WALLET | BANK_TRANSFER
+  subtotal            Float
+  discountAmount      Float    @default(0)
+  shippingFee         Float    @default(0)
+  totalAmount         Float
+  prescriptionId      String?
+  notes               String?
+  cancelReason        String?
+  deliveryAgentName   String?
+  estimatedDelivery   String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user         User            @relation(fields: [userId], references: [id])
+  address      Address?        @relation(fields: [addressId], references: [id])
+  prescription Prescription?   @relation(fields: [prescriptionId], references: [id])
+  items        OrderItem[]
+  tickets      SupportTicket[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+}
+
+model OrderItem {
+  id                     String  @id @default(cuid())
+  orderId                String
+  productId              String
+  productName            String
+  unitPrice              Float
+  quantity               Int
+  isPrescriptionRequired Boolean @default(false)
+  totalPrice             Float
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model Coupon {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  discountType   String    @default("PERCENTAGE") // PERCENTAGE | FIXED
+  discountValue  Float
+  minOrderAmount Float     @default(0)
+  expiresAt      DateTime?
+  isActive       Boolean   @default(true) // Hide/show toggle for promo codes
+  createdAt      DateTime  @default(now())
+
+  @@index([code])
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique // e.g. "top_announcement", "hero_banner", "rx_section", "refill_callout"
+  value     String   // "true" or "false"
+  label     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RefillReminder {
+  id             String   @id @default(cuid())
+  userId         String
+  productId      String
+  frequencyDays  Int      @default(30)
+  nextRefillDate DateTime
+  notes          String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([userId])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String
+  rating     Int
+  comment    String
+  isApproved Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model SupportTicket {
+  id           String   @id @default(cuid())
+  ticketNumber String   @unique
+  userId       String
+  orderId      String?
+  subject      String
+  category     String   @default("General")
+  status       String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED | CLOSED
+  priority     String   @default("Normal")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id])
+  order    Order?          @relation(fields: [orderId], references: [id])
+  messages TicketMessage[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  senderId  String
+  message   String
+  createdAt DateTime @default(now())
+
+  ticketRef SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender    User          @relation(fields: [senderId], references: [id])
+
+  @@index([ticketId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("ActorAuditLogs", fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+}

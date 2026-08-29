@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap");
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: #faf8f3;
+  color: #1b2430;
+}
+
+/* Visible focus states everywhere — never rely on browser defaults alone,
+   never remove them for a "cleaner" look. */
+:focus-visible {
+  outline: 2px solid #2f6f62;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* The "stamp" signature: used for reference numbers and status badges to
+   evoke an official seal without leaning on gradients or glassmorphism. */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.04em;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  padding: 0.25em 0.85em;
+  transform: rotate(-1deg);
+}
