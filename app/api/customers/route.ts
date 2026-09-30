@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { CustomerService } from "@/server/services/CustomerService";
 import { CustomerSchema } from "@/lib/validation/master_data";
@@ -18,8 +19,10 @@ export async function GET(request: Request) {
     const result = await CustomerService.list(user, { search, status, skip, take });
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    console.error("[Customer GET Error]:", error);
+    if (error instanceof AppError || (error && typeof error === "object" && "statusCode" in error)) {
+      const appErr = error as AppError;
+      return NextResponse.json({ error: appErr.message, code: appErr.code }, { status: appErr.statusCode || 400 });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -36,8 +39,14 @@ export async function POST(request: Request) {
     const customer = await CustomerService.create(user, validated);
     return NextResponse.json(customer, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    console.error("[Customer POST Error]:", error);
+    if (error instanceof z.ZodError) {
+      const message = error.errors.map((e) => e.message).join(", ");
+      return NextResponse.json({ error: message, code: "VALIDATION_ERROR" }, { status: 400 });
+    }
+    if (error instanceof AppError || (error && typeof error === "object" && "statusCode" in error)) {
+      const appErr = error as AppError;
+      return NextResponse.json({ error: appErr.message, code: appErr.code }, { status: appErr.statusCode || 400 });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
