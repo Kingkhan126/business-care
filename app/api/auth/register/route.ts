@@ -25,14 +25,16 @@ export async function POST(request: Request) {
       },
     });
   } catch (err: unknown) {
-    if (err instanceof AppError) {
+    console.error("[Register API Error]:", err);
+    if (err instanceof AppError || (err && typeof err === "object" && "statusCode" in err)) {
+      const appErr = err as AppError;
       return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: err.statusCode }
+        { success: false, error: appErr.message, code: appErr.code },
+        { status: appErr.statusCode || 400 }
       );
     }
     return NextResponse.json(
-      { success: false, error: "Registration failed" },
+      { success: false, error: "Registration failed. Please check your details and try again." },
       { status: 400 }
     );
   }
