@@ -124,7 +124,7 @@ export default function ChartOfAccountsPage() {
                         <div className="flex items-center gap-6">
                           <span className="text-[10px] font-mono text-slate-500 uppercase">{acc.normalBalance}</span>
                           <span className="font-mono font-semibold text-slate-900 w-28 text-right">
-                            ${Number(acc.currentBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            PKR {Number(acc.currentBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </div>
                       </div>

@@ -255,7 +255,7 @@ export default function BankAccountsPage() {
                     )}
                   </td>
                   <td className="py-3.5 px-4 text-right font-bold text-slate-900">
-                    ${Number(acc.currentBalance).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {acc.currency || "PKR"} {Number(acc.currentBalance).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="py-3.5 px-4 text-center">
                     {acc.isActive ? (

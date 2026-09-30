@@ -193,7 +193,7 @@ export default function AccountDetailPage() {
           <div className="p-4 bg-slate-50 rounded-lg border border-slate-200/60">
             <span className="text-xs text-slate-500 font-medium">Operational Statement Balance</span>
             <div className="text-2xl font-bold text-slate-900 mt-1">
-              ${Number(account?.currentBalance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {account?.currency || "PKR"} {Number(account?.currentBalance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-[11px] text-slate-400 mt-1">Current calculated bank balance</p>
           </div>
@@ -201,7 +201,7 @@ export default function AccountDetailPage() {
           <div className="p-4 bg-slate-50 rounded-lg border border-slate-200/60">
             <span className="text-xs text-slate-500 font-medium">General Ledger Book Balance</span>
             <div className="text-2xl font-bold text-slate-900 mt-1">
-              ${Number(account?.ledgerBalance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {account?.currency || "PKR"} {Number(account?.ledgerBalance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-[11px] text-slate-400 mt-1">Authoritative double-entry GL balance</p>
           </div>
@@ -216,7 +216,7 @@ export default function AccountDetailPage() {
               )}
             </div>
             <div className="text-2xl font-bold mt-1">
-              ${Number(account?.variance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {account?.currency || "PKR"} {Number(account?.variance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-[11px] mt-1 opacity-80">
               {Math.abs(account?.variance || 0) > 0.01 ? "Statement variance requires matching/reconciliation" : "Operational and GL balances strictly match"}

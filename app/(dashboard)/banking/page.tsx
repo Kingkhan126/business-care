@@ -139,7 +139,7 @@ export default function BankingDashboardPage() {
           </div>
           <div className="mt-3">
             <div className="text-2xl font-bold text-slate-900">
-              ${loading ? "..." : (data?.netLiquidity ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              PKR {loading ? "..." : (data?.netLiquidity ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-slate-500 mt-1">Cash + Bank - Credit Cards</p>
           </div>
@@ -156,7 +156,7 @@ export default function BankingDashboardPage() {
           </div>
           <div className="mt-3">
             <div className="text-2xl font-bold text-slate-900">
-              ${loading ? "..." : (data?.totalBank ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              PKR {loading ? "..." : (data?.totalBank ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-slate-500 mt-1">Checking & Savings Operational Total</p>
           </div>
@@ -173,7 +173,7 @@ export default function BankingDashboardPage() {
           </div>
           <div className="mt-3">
             <div className="text-2xl font-bold text-slate-900">
-              ${loading ? "..." : (data?.totalCash ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              PKR {loading ? "..." : (data?.totalCash ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-slate-500 mt-1">Cash registers and petty cash</p>
           </div>
@@ -223,7 +223,7 @@ export default function BankingDashboardPage() {
                 <div className="mt-4 flex items-baseline justify-between">
                   <span className="text-xs text-slate-500">Balance:</span>
                   <span className="text-lg font-bold text-slate-900">
-                    ${acc.currentBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {acc.currency || "PKR"} {acc.currentBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
