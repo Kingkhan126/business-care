@@ -57,7 +57,7 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
     sellingPrice: 0,
     trackInventory: true,
     allowNegativeStock: false,
-    currency: "USD",
+    currency: "PKR",
   });
 
   const [serviceForm, setServiceForm] = React.useState<Partial<ServiceInput>>({
@@ -66,7 +66,7 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
     description: "",
     costPrice: 0,
     sellingPrice: 0,
-    currency: "USD",
+    currency: "PKR",
   });
 
   const fetchProducts = async () => {
@@ -107,7 +107,7 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
       if (!res.ok) throw new Error(data.error || "Failed to create product");
 
       setIsProductDialogOpen(false);
-      setProductForm({ sku: "", name: "", description: "", costPrice: 0, sellingPrice: 0, trackInventory: true, currency: "USD" });
+      setProductForm({ sku: "", name: "", description: "", costPrice: 0, sellingPrice: 0, trackInventory: true, currency: "PKR" });
       fetchProducts();
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Error creating product");
@@ -128,7 +128,7 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
       if (!res.ok) throw new Error(data.error || "Failed to create service");
 
       setIsServiceDialogOpen(false);
-      setServiceForm({ code: "", name: "", description: "", costPrice: 0, sellingPrice: 0, currency: "USD" });
+      setServiceForm({ code: "", name: "", description: "", costPrice: 0, sellingPrice: 0, currency: "PKR" });
       fetchServices();
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Error creating service");
@@ -139,10 +139,10 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl font-bold tracking-tight text-white">
             Products & Services Catalog
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400">
             Manage physical products, SKUs, inventory tracking flags, and non-stock service items.
           </p>
         </div>
@@ -157,11 +157,11 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
       </div>
 
       <Tabs defaultValue="products">
-        <TabList className="bg-slate-100 p-1 rounded-lg">
-          <TabTrigger value="products" className="text-xs">
+        <TabList className="bg-slate-800/80 border border-slate-700/60 p-1 rounded-lg">
+          <TabTrigger value="products" className="text-xs text-slate-300">
             Physical Products ({products.length})
           </TabTrigger>
-          <TabTrigger value="services" className="text-xs">
+          <TabTrigger value="services" className="text-xs text-slate-300">
             Non-Stock Services ({services.length})
           </TabTrigger>
         </TabList>
@@ -171,7 +171,7 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <Package className="h-5 w-5 text-indigo-600" /> Physical Product Catalog
+                <Package className="h-5 w-5 text-indigo-400" /> Physical Product Catalog
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -194,17 +194,17 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
                   <TableBody>
                     {products.map((p) => (
                       <TableRow key={p.id}>
-                        <TableCell className="font-mono text-xs font-semibold text-indigo-600">
+                        <TableCell className="font-mono text-xs font-semibold text-indigo-400">
                           {p.sku}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-slate-900">{p.name}</span>
-                            {p.category && <span className="text-[11px] text-slate-400">{p.category.name}</span>}
+                            <span className="font-medium text-white">{p.name}</span>
+                            {p.category && <span className="text-[11px] text-slate-300">{p.category.name}</span>}
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-xs">${Number(p.costPrice).toFixed(2)}</TableCell>
-                        <TableCell className="font-mono text-xs font-semibold">${Number(p.sellingPrice).toFixed(2)}</TableCell>
+                        <TableCell className="font-mono text-xs text-slate-300">PKR {Number(p.costPrice).toFixed(2)}</TableCell>
+                        <TableCell className="font-mono text-xs font-semibold text-emerald-400">PKR {Number(p.sellingPrice).toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge variant={p.trackInventory ? "info" : "default"}>
                             {p.trackInventory ? "Tracked" : "Non-tracked"}
@@ -229,12 +229,12 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <Tag className="h-5 w-5 text-indigo-600" /> Non-Stock Services
+                <Tag className="h-5 w-5 text-indigo-400" /> Non-Stock Services
               </CardTitle>
             </CardHeader>
             <CardContent>
               {services.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 text-xs">
+                <div className="p-8 text-center text-slate-400 text-xs">
                   No services found. Click Add Service to create your first service item.
                 </div>
               ) : (
@@ -251,12 +251,12 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
                   <TableBody>
                     {services.map((s) => (
                       <TableRow key={s.id}>
-                        <TableCell className="font-mono text-xs font-semibold text-indigo-600">
+                        <TableCell className="font-mono text-xs font-semibold text-indigo-400">
                           {s.code}
                         </TableCell>
-                        <TableCell className="font-medium text-slate-900">{s.name}</TableCell>
-                        <TableCell className="font-mono text-xs">${Number(s.costPrice).toFixed(2)}</TableCell>
-                        <TableCell className="font-mono text-xs font-semibold">${Number(s.sellingPrice).toFixed(2)}</TableCell>
+                        <TableCell className="font-medium text-white">{s.name}</TableCell>
+                        <TableCell className="font-mono text-xs text-slate-300">PKR {Number(s.costPrice).toFixed(2)}</TableCell>
+                        <TableCell className="font-mono text-xs font-semibold text-emerald-400">PKR {Number(s.sellingPrice).toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge variant={s.status === "ACTIVE" ? "success" : "default"}>
                             {s.status}
@@ -283,21 +283,21 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
           {errorMsg && <div className="p-3 text-red-600 bg-red-50 rounded border border-red-200">{errorMsg}</div>}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">SKU *</label>
+              <label className="block font-medium text-slate-200 mb-1">SKU *</label>
               <Input required value={productForm.sku} onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })} placeholder="PROD-001" />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Product Name *</label>
+              <label className="block font-medium text-slate-200 mb-1">Product Name *</label>
               <Input required value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} placeholder="Wireless Mouse" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Cost Price ($)</label>
+              <label className="block font-medium text-slate-200 mb-1">Cost Price (PKR)</label>
               <Input type="number" step="0.01" value={productForm.costPrice} onChange={(e) => setProductForm({ ...productForm, costPrice: parseFloat(e.target.value) || 0 })} />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Selling Price ($)</label>
+              <label className="block font-medium text-slate-200 mb-1">Selling Price (PKR)</label>
               <Input type="number" step="0.01" value={productForm.sellingPrice} onChange={(e) => setProductForm({ ...productForm, sellingPrice: parseFloat(e.target.value) || 0 })} />
             </div>
           </div>
@@ -319,21 +319,21 @@ export function ProductClientPage({ initialProducts, initialServices }: ProductC
           {errorMsg && <div className="p-3 text-red-600 bg-red-50 rounded border border-red-200">{errorMsg}</div>}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Service Code *</label>
+              <label className="block font-medium text-slate-200 mb-1">Service Code *</label>
               <Input required value={serviceForm.code} onChange={(e) => setServiceForm({ ...serviceForm, code: e.target.value })} placeholder="SRV-CONSULT" />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Service Name *</label>
+              <label className="block font-medium text-slate-200 mb-1">Service Name *</label>
               <Input required value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} placeholder="IT Support (Hourly)" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Cost Price ($)</label>
+              <label className="block font-medium text-slate-200 mb-1">Cost Price (PKR)</label>
               <Input type="number" step="0.01" value={serviceForm.costPrice} onChange={(e) => setServiceForm({ ...serviceForm, costPrice: parseFloat(e.target.value) || 0 })} />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Selling Rate ($)</label>
+              <label className="block font-medium text-slate-200 mb-1">Selling Rate (PKR)</label>
               <Input type="number" step="0.01" value={serviceForm.sellingPrice} onChange={(e) => setServiceForm({ ...serviceForm, sellingPrice: parseFloat(e.target.value) || 0 })} />
             </div>
           </div>

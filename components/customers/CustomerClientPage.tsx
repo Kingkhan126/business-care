@@ -252,29 +252,29 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
               <TableBody>
                 {customers.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-mono text-xs font-medium text-indigo-600">
+                    <TableCell className="font-mono text-xs font-medium text-indigo-400">
                       {c.customerNumber}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium text-slate-900">{c.displayName}</span>
-                        {c.legalName && <span className="text-[11px] text-slate-400">{c.legalName}</span>}
+                        <span className="font-medium text-white">{c.displayName}</span>
+                        {c.legalName && <span className="text-[11px] text-slate-300">{c.legalName}</span>}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col text-xs text-slate-600">
+                      <div className="flex flex-col text-xs text-slate-300">
                         {c.contactPerson && <span>{c.contactPerson}</span>}
                         {c.email && (
-                          <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                          <span className="flex items-center gap-1 text-[11px] text-slate-400">
                             <Mail className="h-3 w-3" /> {c.email}
                           </span>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-600">
+                    <TableCell className="text-xs text-slate-300">
                       {[c.billingCity, c.billingCountry].filter(Boolean).join(", ") || "-"}
                     </TableCell>
-                    <TableCell className="font-mono text-xs font-semibold">{c.currency}</TableCell>
+                    <TableCell className="font-mono text-xs font-semibold text-slate-200">{c.currency}</TableCell>
                     <TableCell>
                       <Badge variant={c.status === "ACTIVE" ? "success" : "default"}>
                         {c.status}
@@ -313,7 +313,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
             </div>
           )}
           <div>
-            <label className="block font-medium text-slate-700 mb-1">Display Name *</label>
+            <label className="block font-medium text-slate-200 mb-1">Display Name *</label>
             <Input
               required
               value={formData.displayName}
@@ -323,7 +323,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Legal Name</label>
+              <label className="block font-medium text-slate-200 mb-1">Legal Name</label>
               <Input
                 value={formData.legalName}
                 onChange={(e) => setFormData({ ...formData, legalName: e.target.value })}
@@ -331,7 +331,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
               />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Contact Person</label>
+              <label className="block font-medium text-slate-200 mb-1">Contact Person</label>
               <Input
                 value={formData.contactPerson}
                 onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
@@ -341,7 +341,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Email</label>
+              <label className="block font-medium text-slate-200 mb-1">Email</label>
               <Input
                 type="email"
                 value={formData.email}
@@ -350,7 +350,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
               />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Phone</label>
+              <label className="block font-medium text-slate-200 mb-1">Phone</label>
               <Input
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -360,7 +360,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">City</label>
+              <label className="block font-medium text-slate-200 mb-1">City</label>
               <Input
                 value={formData.billingCity}
                 onChange={(e) => setFormData({ ...formData, billingCity: e.target.value })}
@@ -368,7 +368,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
               />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Country</label>
+              <label className="block font-medium text-slate-200 mb-1">Country</label>
               <Input
                 value={formData.billingCountry}
                 onChange={(e) => setFormData({ ...formData, billingCountry: e.target.value })}
@@ -409,7 +409,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
             </div>
           )}
           <div>
-            <label className="block font-medium text-slate-700 mb-1">Display Name *</label>
+            <label className="block font-medium text-slate-200 mb-1">Display Name *</label>
             <Input
               required
               value={editFormData.displayName || ""}
@@ -419,7 +419,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Legal Name</label>
+              <label className="block font-medium text-slate-200 mb-1">Legal Name</label>
               <Input
                 value={editFormData.legalName || ""}
                 onChange={(e) => setEditFormData({ ...editFormData, legalName: e.target.value })}
@@ -427,7 +427,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
               />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Contact Person</label>
+              <label className="block font-medium text-slate-200 mb-1">Contact Person</label>
               <Input
                 value={editFormData.contactPerson || ""}
                 onChange={(e) => setEditFormData({ ...editFormData, contactPerson: e.target.value })}
@@ -437,7 +437,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Email</label>
+              <label className="block font-medium text-slate-200 mb-1">Email</label>
               <Input
                 type="email"
                 value={editFormData.email || ""}
@@ -446,7 +446,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
               />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Phone</label>
+              <label className="block font-medium text-slate-200 mb-1">Phone</label>
               <Input
                 value={editFormData.phone || ""}
                 onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
@@ -456,7 +456,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 mb-1">City</label>
+              <label className="block font-medium text-slate-200 mb-1">City</label>
               <Input
                 value={editFormData.billingCity || ""}
                 onChange={(e) => setEditFormData({ ...editFormData, billingCity: e.target.value })}
@@ -464,7 +464,7 @@ export function CustomerClientPage({ initialCustomers }: CustomerClientPageProps
               />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 mb-1">Country</label>
+              <label className="block font-medium text-slate-200 mb-1">Country</label>
               <Input
                 value={editFormData.billingCountry || ""}
                 onChange={(e) => setEditFormData({ ...editFormData, billingCountry: e.target.value })}

@@ -45,15 +45,45 @@ export class CustomerService {
 
     const userProvidedNumber = Boolean(input.customerNumber?.trim());
     let attempts = 0;
-    const maxAttempts = 5;
+    const maxAttempts = 25;
 
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
           let customerNumber = input.customerNumber?.trim();
           if (!customerNumber) {
-            const count = await tx.customer.count({ where: { organizationId: user.activeOrganizationId! } });
-            customerNumber = `CUS-${String(count + 1 + attempts).padStart(6, "0")}`;
+            if (attempts >= 15) {
+              // Safe fallback guaranteeing uniqueness
+              customerNumber = `CUS-${Date.now().toString().slice(-6)}${attempts}`;
+            } else {
+              let maxSeq = 0;
+              if (typeof tx.customer?.findMany === "function") {
+                const existingCustomers = await tx.customer.findMany({
+                  where: {
+                    organizationId: user.activeOrganizationId!,
+                    customerNumber: { startsWith: "CUS-" },
+                  },
+                  select: { customerNumber: true },
+                });
+                if (Array.isArray(existingCustomers)) {
+                  for (const c of existingCustomers) {
+                    const match = c.customerNumber?.match(/^CUS-(\d+)$/);
+                    if (match) {
+                      const seq = parseInt(match[1], 10);
+                      if (!isNaN(seq) && seq > maxSeq) {
+                        maxSeq = seq;
+                      }
+                    }
+                  }
+                }
+              }
+              if (maxSeq === 0) {
+                const count = await tx.customer.count({ where: { organizationId: user.activeOrganizationId! } });
+                maxSeq = count;
+              }
+              const candidateSeq = maxSeq + 1 + attempts;
+              customerNumber = `CUS-${String(candidateSeq).padStart(6, "0")}`;
+            }
           }
 
           const existing = await tx.customer.findFirst({

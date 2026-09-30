@@ -62,8 +62,12 @@ export class InvoiceRepository {
       db.salesInvoice.findMany({
         where,
         include: {
-          customer: {
-            select: { id: true, customerNumber: true, displayName: true, email: true },
+          customer: true,
+          lines: {
+            include: {
+              product: true,
+              service: true,
+            },
           },
           _count: { select: { lines: true, paymentAllocations: true } },
         },

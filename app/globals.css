@@ -202,3 +202,39 @@ body {
 .glass-card-3d ::-webkit-scrollbar-thumb:hover {
   background: rgba(99, 102, 241, 0.4);
 }
+
+/* ─── Clean Print Stylesheet for Invoices & Reports ─── */
+@media print {
+  @page {
+    margin: 12mm 15mm;
+    size: auto;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 12pt;
+  }
+
+  /* Hide app navigation, sidebar, chat widgets, header, backdrop */
+  header,
+  aside,
+  nav,
+  .print\\:hidden,
+  button:not(.print-allow) {
+    display: none !important;
+  }
+
+  /* Make printable area fill page cleanly */
+  #invoice-printable-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+}
+

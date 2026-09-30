@@ -2,12 +2,20 @@
 
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { Plus, Search, Receipt, CheckCircle, Ban, DollarSign } from "lucide-react";
+import { Plus, Search, Receipt, CheckCircle, Ban, DollarSign, Printer } from "lucide-react";
+import { InvoicePrintModal, InvoicePrintData } from "@/components/invoices/InvoicePrintModal";
 
 interface Customer {
   id: string;
   customerNumber: string;
   displayName: string;
+  legalName?: string | null;
+  contactPerson?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  billingAddressLine1?: string | null;
+  billingCity?: string | null;
+  billingCountry?: string | null;
 }
 
 interface Product {
@@ -24,6 +32,8 @@ interface InvoiceLine {
   unitPrice: number;
   taxRate: number;
   discount: number;
+  product?: { name: string; sku: string } | null;
+  total?: number | string;
 }
 
 interface SalesInvoice {
@@ -37,6 +47,8 @@ interface SalesInvoice {
   amountPaid: number;
   balanceDue: number;
   customer: Customer;
+  notes?: string | null;
+  lines?: InvoiceLine[];
   _count?: { lines: number };
 }
 
@@ -63,9 +75,9 @@ function FloatingLedgerIcon() {
         <rect x="28" y="48" width="36" height="2" rx="1" fill="rgba(148,163,184,0.3)" />
         <rect x="28" y="56" width="20" height="2" rx="1" fill="rgba(148,163,184,0.3)" />
         <rect x="28" y="64" width="36" height="2" rx="1" fill="rgba(148,163,184,0.3)" />
-        {/* Dollar sign circle */}
+        {/* Rupee sign circle */}
         <circle cx="68" cy="68" r="16" fill="rgba(99,102,241,0.9)" stroke="rgba(129,140,248,0.6)" strokeWidth="1.5" />
-        <text x="68" y="74" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="Inter, sans-serif">$</text>
+        <text x="68" y="74" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold" fontFamily="Inter, sans-serif">₨</text>
         {/* Top-right bookmark */}
         <path d="M60 12 L60 26 L66 20 L72 26 L72 12" fill="rgba(99,102,241,0.5)" />
         <defs>
@@ -88,6 +100,10 @@ export default function InvoicesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Print & Share modal state
+  const [printInvoice, setPrintInvoice] = useState<InvoicePrintData | null>(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split("T")[0]);
@@ -170,11 +186,17 @@ export default function InvoicesPage() {
         throw new Error(errData.error || "Failed to create invoice");
       }
 
+      const createdInvoice = await res.json();
+
       setShowCreateModal(false);
       setSelectedCustomer("");
       setNotes("");
       setLines([{ description: "", quantity: 1, unitPrice: 0, taxRate: 0, discount: 0 }]);
       fetchData();
+
+      // Automatically open Print & Share modal for instant customer handoff
+      setPrintInvoice(createdInvoice);
+      setIsPrintModalOpen(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -280,8 +302,8 @@ export default function InvoicesPage() {
                   <td className="px-6 py-4 font-semibold text-indigo-400">{inv.invoiceNumber}</td>
                   <td className="px-6 py-4 font-medium text-slate-200">{inv.customer?.displayName}</td>
                   <td className="px-6 py-4 text-slate-400">{new Date(inv.dueDate).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-200">${Number(inv.total).toFixed(2)}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-200">${Number(inv.balanceDue).toFixed(2)}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-200">PKR {Number(inv.total).toFixed(2)}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-200">PKR {Number(inv.balanceDue).toFixed(2)}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${
@@ -297,13 +319,24 @@ export default function InvoicesPage() {
                       {inv.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right space-x-2">
+                  <td className="px-6 py-4 text-right space-x-3 whitespace-nowrap">
+                    <button
+                      onClick={() => {
+                        setPrintInvoice(inv);
+                        setIsPrintModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+                      title="Print or share invoice with customer"
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      Print / Share
+                    </button>
                     {inv.status === "DRAFT" && (
                       <button
                         onClick={() => handleIssueInvoice(inv.id)}
                         className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
                       >
-                        Issue Invoice
+                        Issue
                       </button>
                     )}
                     {(inv.status === "ISSUED" || inv.status === "PARTIALLY_PAID") && (
@@ -381,7 +414,7 @@ export default function InvoicesPage() {
                         <option value="">Select Item (Optional)...</option>
                         {products.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.name} - ${Number(p.sellingPrice).toFixed(2)}
+                            {p.name} - PKR {Number(p.sellingPrice).toFixed(2)}
                           </option>
                         ))}
                       </select>
@@ -412,7 +445,7 @@ export default function InvoicesPage() {
                       />
                       <input
                         type="number"
-                        placeholder="Price"
+                        placeholder="Price (PKR)"
                         required
                         min="0"
                         step="0.01"
@@ -422,7 +455,7 @@ export default function InvoicesPage() {
                           updated[idx].unitPrice = Number(e.target.value);
                           setLines(updated);
                         }}
-                        className="w-24 rounded-lg border border-white/10 glass-input p-1.5 text-xs text-slate-200"
+                        className="w-28 rounded-lg border border-white/10 glass-input p-1.5 text-xs text-slate-200"
                       />
                     </div>
                   ))}
@@ -449,13 +482,20 @@ export default function InvoicesPage() {
                   disabled={submitting}
                   className="rounded-lg bg-gradient-to-b from-indigo-500 to-indigo-700 px-4 py-2 text-sm font-semibold text-white bevel-raised hover:from-indigo-400 hover:to-indigo-600 hover:shadow-glow-indigo disabled:opacity-50 transition-all duration-150"
                 >
-                  {submitting ? "Saving..." : "Save Invoice"}
+                  {submitting ? "Saving & Preparing..." : "Save & Print Invoice"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Invoice Print & Share Modal */}
+      <InvoicePrintModal
+        invoice={printInvoice}
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+      />
     </div>
   );
 }
