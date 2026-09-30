@@ -462,6 +462,14 @@ export function createStorageService(): IStorageService {
     return new S3StorageService();
   }
 
+  // Allow static build phase without throwing configuration error
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.NEXT_BUILD === "1"
+  ) {
+    return new LocalDiskStorageService();
+  }
+
   if (process.env.NODE_ENV === "production" && process.env.VERCEL === "1") {
     throw new Error(
       "FATAL STORAGE CONFIGURATION ERROR: Serverless production environments require persistent cloud storage. Please configure S3_BUCKET, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY."
@@ -471,4 +479,23 @@ export function createStorageService(): IStorageService {
   return new LocalDiskStorageService();
 }
 
-export const storageService: IStorageService = createStorageService();
+let _cachedStorageService: IStorageService | null = null;
+
+export function getStorageService(): IStorageService {
+  if (!_cachedStorageService) {
+    _cachedStorageService = createStorageService();
+  }
+  return _cachedStorageService;
+}
+
+export const storageService: IStorageService = new Proxy({} as IStorageService, {
+  get(_target, prop) {
+    const service = getStorageService();
+    const value = (service as any)[prop];
+    if (typeof value === "function") {
+      return value.bind(service);
+    }
+    return value;
+  },
+});
+
