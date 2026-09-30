@@ -169,7 +169,7 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
                         isInflow ? "text-emerald-400" : "text-rose-400"
                       )}
                     >
-                      {isInflow ? "+" : "-"}${Math.abs(item.amount).toFixed(2)}
+                      {isInflow ? "+PKR " : "-PKR "}{Math.abs(item.amount).toFixed(2)}
                     </p>
                     <span className="text-[10px] text-slate-400 font-mono">
                       {item.status}

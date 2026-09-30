@@ -62,7 +62,7 @@ export function BankingLiquidityPanel({
           </span>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <span className="text-2xl sm:text-3xl font-bold font-mono text-white text-depth">
-              ${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              PKR {totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-mono text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20">
               <ShieldCheck className="h-3 w-3" />
@@ -113,7 +113,7 @@ export function BankingLiquidityPanel({
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs font-bold font-mono text-white">
-                    ${acc.currentBalance.toFixed(2)}
+                    PKR {acc.currentBalance.toFixed(2)}
                   </p>
                   <span className="text-[10px] text-emerald-400 font-mono">
                     {acc.currency}

@@ -128,19 +128,19 @@ export function FinancialOverviewChart({
         <div>
           <span className="text-[10px] uppercase font-semibold text-slate-400">6-Mo Invoiced</span>
           <p className="text-sm sm:text-base font-bold text-emerald-400 font-mono mt-0.5">
-            ${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            PKR {totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
         <div className="border-x border-white/5">
           <span className="text-[10px] uppercase font-semibold text-slate-400">6-Mo Expenses</span>
           <p className="text-sm sm:text-base font-bold text-rose-400 font-mono mt-0.5">
-            ${totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            PKR {totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
         <div>
           <span className="text-[10px] uppercase font-semibold text-slate-400">Net Margin</span>
           <p className="text-sm sm:text-base font-bold text-indigo-300 font-mono mt-0.5">
-            ${netProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            PKR {netProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
       </div>
@@ -191,7 +191,7 @@ export function FinancialOverviewChart({
                 textAnchor="end"
                 className="fill-slate-500 text-[10px] font-mono"
               >
-                ${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val.toFixed(0)}
+                {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val.toFixed(0)}
               </text>
             </g>
           ))}
@@ -313,7 +313,7 @@ export function FinancialOverviewChart({
                   Revenue:
                 </span>
                 <span className="font-semibold text-white">
-                  ${activePoint.revenue.toFixed(2)}
+                  PKR {activePoint.revenue.toFixed(2)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4">
@@ -322,7 +322,7 @@ export function FinancialOverviewChart({
                   Expenses:
                 </span>
                 <span className="font-semibold text-white">
-                  ${activePoint.expenses.toFixed(2)}
+                  PKR {activePoint.expenses.toFixed(2)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4 pt-1 border-t border-white/5">
@@ -334,7 +334,7 @@ export function FinancialOverviewChart({
                       : "text-rose-300"
                   }`}
                 >
-                  ${(activePoint.revenue - activePoint.expenses).toFixed(2)}
+                  PKR {(activePoint.revenue - activePoint.expenses).toFixed(2)}
                 </span>
               </div>
             </div>

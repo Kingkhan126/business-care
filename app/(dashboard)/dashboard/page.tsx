@@ -281,7 +281,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <MetricCard
           title="Total Revenue"
-          value={`$${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          value={`PKR ${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtitle="Issued & paid sales"
           icon={TrendingUp}
           accent="emerald"
@@ -292,7 +292,7 @@ export default async function DashboardPage() {
 
         <MetricCard
           title="Operating Expenses"
-          value={`$${totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          value={`PKR ${totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtitle="Posted & approved"
           icon={PieChart}
           accent="rose"
@@ -303,7 +303,7 @@ export default async function DashboardPage() {
 
         <MetricCard
           title="Net Profit"
-          value={`$${netProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          value={`PKR ${netProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtitle="Revenue less expenses"
           icon={Wallet}
           accent={netProfit >= 0 ? "indigo" : "rose"}
@@ -314,7 +314,7 @@ export default async function DashboardPage() {
 
         <MetricCard
           title="Liquid Cash"
-          value={`$${totalBankBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          value={`PKR ${totalBankBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtitle="Total bank balances"
           icon={Landmark}
           accent="sky"
@@ -325,7 +325,7 @@ export default async function DashboardPage() {
 
         <MetricCard
           title="Receivables"
-          value={`$${outstandingReceivables.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          value={`PKR ${outstandingReceivables.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtitle="Pending customer balance"
           icon={FileText}
           accent="amber"
@@ -336,7 +336,7 @@ export default async function DashboardPage() {
 
         <MetricCard
           title="Payables"
-          value={`$${outstandingPayables.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          value={`PKR ${outstandingPayables.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtitle="Awaiting disbursement"
           icon={Receipt}
           accent="rose"
