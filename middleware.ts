@@ -1,34 +1,43 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
+import { NextResponse, type NextRequest } from "next/server";
+import { jwtVerify } from "jose";
+import { getSecretKey } from "@/lib/auth/session";
 
-const PROTECTED_ADMIN_PREFIX = "/admin";
-const AUTH_PAGES = ["/login", "/register"];
+const PUBLIC_ROUTES = ["/login", "/register", "/api/auth/login", "/api/auth/register", "/api/health"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const session = await getSession();
 
-  const isAdminRoute = pathname.startsWith(PROTECTED_ADMIN_PREFIX);
-  const isAuthPage = AUTH_PAGES.some((p) => pathname.startsWith(p));
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  const token = request.cookies.get("auth_session")?.value;
 
-  if (isAdminRoute && !session) {
+  let isValidSession = false;
+  if (token) {
+    try {
+      const key = getSecretKey();
+      await jwtVerify(token, key);
+      isValidSession = true;
+    } catch {
+      isValidSession = false;
+    }
+  }
+
+  // Redirect unauthenticated user trying to access protected dashboard routes
+  if (!isValidSession && !isPublicRoute && pathname !== "/") {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAdminRoute && session?.role !== "ADMIN" && session?.role !== "PHARMACIST") {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  if (isAuthPage && session) {
-    const dest = session.role === "ADMIN" || session.role === "PHARMACIST" ? "/admin" : "/account/orders";
-    return NextResponse.redirect(new URL(dest, request.url));
+  // Redirect authenticated user away from login/register to dashboard
+  if (isValidSession && (pathname === "/login" || pathname === "/register")) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/register"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|public/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

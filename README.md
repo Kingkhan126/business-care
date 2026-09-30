@@ -1,121 +1,194 @@
-# Applications Platform
+# BizEngine — Industrial Business Management & Accounting Platform
 
-A production-oriented replacement for a Google Form application workflow: multi-step form with drafts,
-document upload, submission with reference numbers, status tracking, and an admin console.
+A production-grade, multi-tenant business management and accounting platform built with Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, and Prisma ORM.
 
-> **Note on form content:** no source Google Form was provided when this was built. The application form in
-> `lib/forms/definition.ts` is a representative placeholder (personal info → contact → employment status with
-> conditional fields → documents). The form UI, validation, review screen, and admin views are all
-> **schema-driven** from that one file — replacing it with your real questions does not require touching any
-> other code.
+> **Phase 1 Status**: Industrial Engineering Foundation Completed. Includes multi-organization architecture, granular role-based access control (RBAC), server-side tenant isolation, responsive application shell, original design system, development seed system, audit log framework, and unit testing foundation.
 
-## Features implemented
+---
 
-- Email/password auth: bcrypt hashing, signed JWT session cookies, rate-limited login, generic error messages
-- Route-protecting middleware (server-side; role checks are re-verified in every route handler too)
-- Multi-step application wizard with autosave, save-and-resume drafts, conditional fields, review step, and
-  confirmation-before-submit
-- Idempotent submission (no duplicate records on double-click), auto-generated reference numbers
-  (`APP-YYYY-XXXXXX`)
-- Centralized application status model with a single source of truth for legal transitions
-  (`lib/applications/status.ts`)
-- Document upload with MIME + magic-byte validation, random non-guessable storage keys, and short-lived
-  signed download URLs (local-disk storage for dev — see "Known limitations")
-- Admin console: applications list (search/filter/pagination), application detail with status change +
-  history, CSV export, user management (role/active toggles)
-- Audit logging for status changes, application views, exports, and role changes
-- IDOR-safe authorization: every application/document access is checked against the caller's own user id
-  (or admin role) server-side — never trust a URL parameter or client-supplied role
-- Unit tests for status transitions, permission checks, and schema-driven validation (including conditional
-  field stripping)
+## 1. What the Project Is
 
-## Known limitations (explicitly not implemented — not faked)
+**BizEngine** is a comprehensive business management and accounting platform designed for non-technical business owners, accountants, sales, and operations teams. It serves as an integrated system for managing customers, vendors, estimates, invoices, payments, inventory, purchase orders, expenses, banking feeds, general ledger accounting, financial statements, and predictive forecasting.
 
-- **Object storage**: uses local disk (`storage/uploads/`) via a small `ObjectStorage` interface
-  (`lib/storage/index.ts`). Swap in an S3/GCS-backed implementation of that interface for production; no
-  caller code needs to change.
-- **Email notifications**: only in-app-shaped data exists (no email sending). `Notification` model is in the
-  schema; wiring an email provider is a follow-up.
-- **Rate limiting**: in-memory, single-instance only. Replace with a shared store (e.g. Upstash Redis) before
-  running multiple server instances.
-- **E2E tests**: only unit tests are included. Integration/E2E (Playwright) would be the next addition.
-- **Forgot/reset password**: pages are not implemented; only login/register/logout exist.
+Phase 1 establishes the **Industrial Foundation** upon which future business modules will be incrementally built.
 
-## Tech stack
+---
 
-Next.js (App Router) · TypeScript · PostgreSQL · Prisma · Tailwind CSS · Zod · React Hook Form patterns
-(implemented directly with `useState` for this form; swap to `react-hook-form` if you prefer)
+## 2. Technology Stack
 
-## Local development
+- **Frontend**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Lucide Icons
+- **Backend**: Next.js Server Components, Server Actions, Route Handlers, Zod Validation
+- **Database & ORM**: PostgreSQL, Prisma ORM (Typed client & migration engine)
+- **Authentication & Security**: HTTP-only JWT session cookies (`jose`), bcrypt password hashing (Cost 12), Server-side tenant isolation guards
+- **Testing**: Vitest unit test suite
+- **Tooling**: ESLint, TypeScript (Strict Mode), npm scripts
+
+---
+
+## 3. Prerequisites
+
+- **Node.js**: `v20.x` or `v22.x`
+- **npm**: `v10.x` or higher
+- **PostgreSQL**: A running PostgreSQL instance (local or hosted, e.g., Neon, Supabase, RDS)
+
+---
+
+## 4. Installation
 
 ```bash
+# 1. Clone or navigate to the repository
+cd app-platform
+
+# 2. Install dependencies
 npm install
+
+# 3. Environment configuration
 cp .env.example .env
-# edit .env: set DATABASE_URL to a real Postgres instance, and AUTH_SECRET
-# generate a secret with: openssl rand -base64 32
-
-npx prisma generate
-npx prisma db push        # creates tables from prisma/schema.prisma
-npm run prisma:seed       # creates an admin + sample user + sample applications
-
-npm run dev
 ```
 
-Seed accounts:
-- Admin: `admin@example.com` / `AdminPass123!`
-- User: `applicant@example.com` / `UserPass123!`
+---
 
-## Testing
+## 5. Environment Variables
+
+Create `.env` in the root directory:
+
+```env
+# Primary PostgreSQL Database Connection URL
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bizengine_db?schema=public"
+
+# Session Secret Key (Must be at least 32 characters in production)
+AUTH_SECRET="industrial-super-secret-key-32chars-minimum!!"
+
+# Application Base URL
+APP_URL="http://localhost:3000"
+
+# Node Environment
+NODE_ENV="development"
+```
+
+---
+
+## 6. Database Setup & Migrations
+
+```bash
+# Generate Prisma Client
+npx prisma generate
+
+# Apply migrations / push schema
+npx prisma db push
+
+# Create production migration
+npx prisma migrate dev --name init_phase1_foundation
+```
+
+---
+
+## 7. Development Seed System
+
+Populates system permissions, default roles (Owner, Admin, Manager, Accountant, Member, Viewer), a demo organization (*Acme Global Enterprises*), demo users, and initial audit logs.
+
+```bash
+npm run prisma:seed
+```
+
+### Seed Account Credentials:
+- **Owner**: `owner@acme.com` / `Password123!`
+- **Admin**: `admin@acme.com` / `Password123!`
+- **Staff Member**: `staff@acme.com` / `Password123!`
+
+---
+
+## 8. Development Commands
+
+```bash
+# Start local development server
+npm run dev
+
+# Run TypeScript type check
+npx tsc --noEmit
+
+# Run ESLint
+npm run lint
+```
+
+---
+
+## 9. Testing
+
+Execute the Vitest unit test suite covering RBAC authorization, tenant isolation, Zod validation, and password/JWT utilities:
 
 ```bash
 npm test
 ```
 
-## Production deployment (Vercel + managed Postgres)
+---
 
-1. Provision a PostgreSQL database (Neon, Supabase, RDS, etc.) and set `DATABASE_URL` in Vercel's
-   environment variables.
-2. Set `AUTH_SECRET` to a long random value (never reuse the dev value).
-3. Run `npx prisma migrate deploy` against production as part of your deploy step.
-4. Replace `lib/storage/index.ts`'s `LocalDiskStorage` with an S3/GCS implementation before deploying —
-   local disk storage does not persist across serverless invocations.
-5. Ensure cookies are only ever set over HTTPS (already handled: `secure` is `true` when
-   `NODE_ENV === "production"`).
+## 10. Production Build
 
-## Architecture
+Verify production compilation:
 
-```
-app/
-  (marketing)/        landing, privacy, terms, contact
-  (auth)/              login, register
-  dashboard/            user dashboard
-  application/          new draft + multi-step wizard + read-only summary
-  admin/                overview, applications, users
-  api/                  auth, applications, documents, admin routes
-lib/
-  auth/                password hashing, session/JWT, rate limiting
-  db/                   Prisma client singleton
-  forms/                schema-driven form definition (swap this for your real form)
-  validation/           Zod schemas generated from the form definition
-  applications/         centralized status transition model
-  permissions/           authorization checks (IDOR prevention)
-  storage/               object storage interface + local dev implementation, signed URLs, file-signature check
-prisma/
-  schema.prisma          database schema
-  seed.ts                 dev seed data
-tests/unit/               status, permissions, validation tests
+```bash
+npm run build
+npm run start
 ```
 
-## Database schema summary
+---
 
-`User` → `Application` (1:many) → `ApplicationStatusHistory`, `Document`, `AdminNote` (1:many each).
-`AuditLog` references the acting `User`. Indexes on `email`, `referenceNumber`, `status`, `createdAt`, and
-foreign keys.
+## 11. Architecture Overview
 
-## Permission model
+The codebase is organized with strict separation between presentation, application logic, domain services, database access, and infrastructure:
 
-- `USER`: create/edit own drafts, submit own applications, view own application status and history
-- `ADMIN`: everything a user can do, plus view/search all applications, change status (only along legal
-  transitions), add internal notes, manage users, export data
-- Every check happens server-side in the route handler / server component, using the session's signed role
-  — middleware is an additional layer, not the only one
+```
+app-platform/
+├── app/
+│   ├── (auth)/              # Login and Register pages
+│   ├── (dashboard)/         # AppShell wrapped pages (Dashboard, Org, Users, Audit, Settings)
+│   ├── api/                 # Route handlers (Auth, Organization, Health)
+│   ├── layout.tsx           # Root HTML layout
+│   └── page.tsx             # Root page (redirect handler)
+├── components/
+│   ├── ui/                  # Design system (Button, Input, Select, Card, Badge, Dialog, Table, etc.)
+│   ├── layout/              # AppShell, Header, Sidebar, OrganizationSwitcher, UserMenu
+│   └── shared/              # FutureDomainPlaceholder
+├── server/
+│   ├── authorization/       # RBAC & tenant isolation security guards
+│   ├── repositories/        # Database access abstractions (UserRepository, OrgRepository, etc.)
+│   └── services/            # Business domain services (AuthService, OrgService, AuditService)
+├── db/
+│   ├── client.ts            # Singleton Prisma Client
+│   └── seed/                # Seed scripts
+├── lib/
+│   ├── auth/                # JWT session management & password hashing
+│   ├── errors/              # Application error hierarchy
+│   ├── logging/             # Structured logger with sensitive data redaction
+│   ├── utils/               # Class merging & formatting utilities
+│   └── validation/          # Zod validation schemas
+├── types/                   # Domain TypeScript interfaces
+└── docs/                    # Architecture, Database, Security, Development & Roadmap docs
+```
+
+---
+
+## 12. Phase 1 Scope & Implementation Checklist
+
+- [x] Next.js 14 App Router TypeScript Foundation
+- [x] Responsive Application Shell (360px to 1440px+)
+- [x] Custom Business SaaS Design System (`components/ui/`)
+- [x] PostgreSQL & Prisma Schema (`User`, `Organization`, `OrganizationMember`, `Role`, `Permission`, `RolePermission`, `AuditLog`)
+- [x] Development Seed System (`prisma/seed.ts`)
+- [x] Server-Side Tenant Isolation (`assertTenantAccess`)
+- [x] Granular Role-Based Access Control (`hasPermission`, `requirePermission`)
+- [x] Secure JWT Cookie Session Management
+- [x] Structured Logging Abstraction with Sensitive Data Redaction
+- [x] Error Handling Hierarchy & Boundary UI
+- [x] Unit Testing Setup & Passing Test Suite
+- [x] Architecture & Engineering Documentation (`docs/`)
+
+---
+
+## 13. Future Phase Roadmap
+
+- **Phase 2 — Commercial Core**: Customers, Sales Quotes / Estimates, Invoices, Payments & Receivables.
+- **Phase 3 — Procurement & Inventory**: Vendors, Purchase Orders, Goods Receipt, Product Catalog, Warehouse Inventory.
+- **Phase 4 — Financials & Accounting**: Expense Management, Bank Feeds, Chart of Accounts, Double-Entry General Ledger.
+- **Phase 5 — Intelligence & Forecasting**: Profit & Loss Statements, Balance Sheets, Cash Flow Forecasting, Predictive Analytics.

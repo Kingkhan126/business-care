@@ -1,484 +1,377 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { ExpenseMasterDataService } from "../server/services/ExpenseMasterDataService";
 
 const prisma = new PrismaClient();
 
+const PERMISSIONS = [
+  // Organization & Team
+  { code: "organization.view", category: "Organization", description: "View organization profile and settings" },
+  { code: "organization.update", category: "Organization", description: "Update organization details and settings" },
+  { code: "organization.members.manage", category: "Organization", description: "Invite, update, or remove team members" },
+
+  // User Management
+  { code: "users.view", category: "Users", description: "View user directory and profiles" },
+  { code: "users.manage", category: "Users", description: "Manage user roles and permissions" },
+
+  // Customers & Sales (Future domains)
+  { code: "customers.read", category: "Customers", description: "View customer profiles and history" },
+  { code: "customers.create", category: "Customers", description: "Create new customer records" },
+  { code: "customers.update", category: "Customers", description: "Update customer information" },
+  { code: "customers.delete", category: "Customers", description: "Delete customer records" },
+
+  { code: "invoices.read", category: "Sales", description: "View sales invoices" },
+  { code: "invoices.create", category: "Sales", description: "Create new sales invoices" },
+  { code: "invoices.update", category: "Sales", description: "Update sales invoices" },
+  { code: "invoices.delete", category: "Sales", description: "Delete sales invoices" },
+
+  { code: "estimates.read", category: "Sales", description: "View estimates and quotes" },
+  { code: "estimates.create", category: "Sales", description: "Create estimates and quotes" },
+  { code: "estimates.update", category: "Sales", description: "Update estimates and quotes" },
+
+  { code: "orders.read", category: "Sales", description: "View sales orders" },
+  { code: "orders.create", category: "Sales", description: "Create sales orders" },
+  { code: "orders.update", category: "Sales", description: "Update sales orders" },
+
+  { code: "payments.read", category: "Sales", description: "View customer payment records" },
+  { code: "payments.create", category: "Sales", description: "Record customer payments" },
+
+  { code: "credits.read", category: "Sales", description: "View credit notes and vendor credits" },
+  { code: "credits.create", category: "Sales", description: "Create credit notes and vendor credits" },
+  { code: "credits.update", category: "Sales", description: "Update credit notes and vendor credits" },
+
+  // Vendors & Purchases (Future domains)
+  { code: "vendors.read", category: "Purchases", description: "View vendor profiles" },
+  { code: "vendors.create", category: "Purchases", description: "Create vendor records" },
+  { code: "vendors.update", category: "Purchases", description: "Update vendor information" },
+
+  { code: "purchases.read", category: "Purchases", description: "View purchase orders and bills" },
+  { code: "purchases.create", category: "Purchases", description: "Create purchase orders and bills" },
+  { code: "purchases.update", category: "Purchases", description: "Update purchase orders and bills" },
+
+  // Products & Inventory (Future domains)
+  { code: "products.read", category: "Products", description: "View product catalog" },
+  { code: "products.create", category: "Products", description: "Create products and services" },
+  { code: "products.update", category: "Products", description: "Update product catalog" },
+  { code: "products.delete", category: "Products", description: "Delete products" },
+
+  { code: "inventory.read", category: "Inventory", description: "View stock levels and inventory" },
+  { code: "inventory.update", category: "Inventory", description: "Adjust stock levels and inventory" },
+
+  // Expenses & Reimbursements (Phase 7)
+  { code: "expenses.read", category: "Expenses", description: "View business expenses" },
+  { code: "expenses.create", category: "Expenses", description: "Record business expenses" },
+  { code: "expenses.update", category: "Expenses", description: "Update business expenses" },
+  { code: "expense.read", category: "Expenses", description: "View expenses and reimbursement claims" },
+  { code: "expense.create", category: "Expenses", description: "Create expenses and reimbursement claims" },
+  { code: "expense.update", category: "Expenses", description: "Update draft expenses and claims" },
+  { code: "expense.submit", category: "Expenses", description: "Submit claims for manager approval" },
+  { code: "expense.approve", category: "Expenses", description: "Approve submitted expense claims" },
+  { code: "expense.reject", category: "Expenses", description: "Reject submitted expense claims" },
+  { code: "expense.post", category: "Expenses", description: "Post approved expenses to General Ledger" },
+  { code: "expense.pay", category: "Expenses", description: "Disburse expense payments and employee reimbursements" },
+  { code: "expense.manage", category: "Expenses", description: "Manage expense categories and accounting configurations" },
+  { code: "expense.attachments", category: "Expenses", description: "Upload and inspect receipt attachments" },
+  { code: "expense.reports", category: "Expenses", description: "View expense and reimbursement financial reports" },
+
+  { code: "banking.read", category: "Banking", description: "View bank accounts, cash registers, and transactions" },
+  { code: "banking.manage", category: "Banking", description: "Create and manage bank and cash accounts" },
+  { code: "banking.import", category: "Banking", description: "Import bank statement feeds and files" },
+  { code: "banking.match", category: "Banking", description: "Match and categorize bank transactions" },
+  { code: "banking.reconcile", category: "Banking", description: "Perform and finalize bank reconciliations" },
+  { code: "banking.transfer", category: "Banking", description: "Execute inter-account bank and cash transfers" },
+
+  // Accounting & Reports
+  { code: "accounting.read", category: "Accounting", description: "View journal entries, reports, and chart of accounts" },
+  { code: "accounting.manage", category: "Accounting", description: "Manage financial accounts and manual journals" },
+  { code: "accounting.post", category: "Accounting", description: "Post financial journal entries and transaction postings" },
+  { code: "accounting.reverse", category: "Accounting", description: "Reverse posted accounting journal entries" },
+  { code: "accounting.close_period", category: "Accounting", description: "Close or reopen fiscal accounting periods" },
+
+  { code: "reports.read", category: "Reports", description: "View financial and operational reports" },
+  { code: "reports.export", category: "Reports", description: "Export financial reports and data" },
+
+  // Settings & Audit
+  { code: "settings.manage", category: "Settings", description: "Manage system-wide configuration" },
+  { code: "audit.read", category: "Audit", description: "View system audit logs" },
+];
+
 async function main() {
-  console.log("Seeding database...");
+  console.log("🌱 Starting development database seeding...");
 
-  // Clean existing data
-  await prisma.auditLog.deleteMany({});
-  await prisma.ticketMessage.deleteMany({});
-  await prisma.supportTicket.deleteMany({});
-  await prisma.review.deleteMany({});
-  await prisma.refillReminder.deleteMany({});
-  await prisma.orderItem.deleteMany({});
-  await prisma.order.deleteMany({});
-  await prisma.address.deleteMany({});
-  await prisma.cartItem.deleteMany({});
-  await prisma.wishlistItem.deleteMany({});
-  await prisma.prescriptionAuditLog.deleteMany({});
-  await prisma.prescription.deleteMany({});
-  await prisma.product.deleteMany({});
-  await prisma.category.deleteMany({});
-  await prisma.brand.deleteMany({});
-  await prisma.coupon.deleteMany({});
-  await prisma.user.deleteMany({});
+  // 1. Seed Permissions
+  console.log("Creating permissions...");
+  const permissionMap = new Map<string, string>();
+  for (const perm of PERMISSIONS) {
+    const created = await prisma.permission.upsert({
+      where: { code: perm.code },
+      update: { category: perm.category, description: perm.description },
+      create: perm,
+    });
+    permissionMap.set(perm.code, created.id);
+  }
 
-  const passwordHash = await bcrypt.hash("Pharmacy123!", 10);
+  // Helper to resolve permission IDs from codes
+  const getPermIds = (codes: string[]) =>
+    codes.map((c) => permissionMap.get(c)).filter((id): id is string => Boolean(id));
 
-  // Users
-  const admin = await prisma.user.create({
-    data: {
-      name: "Admin User",
-      email: "admin@pharmacy.com",
-      passwordHash,
-      role: "ADMIN",
-      phone: "+1-800-555-0199",
+  const allPermIds = Array.from(permissionMap.values());
+
+  // 2. Seed System Default Roles
+  console.log("Creating system roles...");
+  const systemRoles = [
+    {
+      name: "Owner",
+      description: "Full administrative and ownership access across the organization.",
+      permCodes: allPermIds,
     },
-  });
-
-  const pharmacist = await prisma.user.create({
-    data: {
-      name: "Dr. Sarah Jenkins, PharmD",
-      email: "pharmacist@pharmacy.com",
-      passwordHash,
-      role: "PHARMACIST",
-      phone: "+1-800-555-0188",
+    {
+      name: "Admin",
+      description: "Administrative access to manage team, settings, and business operations.",
+      permCodes: allPermIds.filter(
+        (id) =>
+          id !== permissionMap.get("settings.manage") // Admin can manage most things
+      ),
     },
-  });
-
-  const customer = await prisma.user.create({
-    data: {
-      name: "John Doe",
-      email: "customer@pharmacy.com",
-      passwordHash,
-      role: "CUSTOMER",
-      phone: "+1-555-0142",
+    {
+      name: "Manager",
+      description: "Operational management of sales, purchases, inventory, and customers.",
+      permCodes: getPermIds([
+        "organization.view",
+        "users.view",
+        "customers.read", "customers.create", "customers.update",
+        "invoices.read", "invoices.create", "invoices.update",
+        "estimates.read", "estimates.create", "estimates.update",
+        "payments.read", "payments.create",
+        "vendors.read", "vendors.create", "vendors.update",
+        "purchases.read", "purchases.create", "purchases.update",
+        "products.read", "products.create", "products.update",
+        "inventory.read", "inventory.update",
+        "expenses.read", "expenses.create",
+        "expense.read", "expense.create", "expense.update", "expense.submit", "expense.approve", "expense.reject", "expense.attachments", "expense.reports",
+        "banking.read", "banking.transfer",
+        "reports.read",
+      ]),
     },
-  });
-
-  // Customer Address
-  const address = await prisma.address.create({
-    data: {
-      userId: customer.id,
-      fullName: "John Doe",
-      phone: "+1-555-0142",
-      street: "742 Evergreen Terrace",
-      city: "Springfield",
-      state: "IL",
-      zipCode: "62704",
-      country: "USA",
-      isDefault: true,
+    {
+      name: "Accountant",
+      description: "Access to banking, accounting, financial statements, and reports.",
+      permCodes: getPermIds([
+        "organization.view",
+        "customers.read",
+        "invoices.read",
+        "payments.read", "payments.create",
+        "vendors.read",
+        "purchases.read",
+        "expenses.read", "expenses.create", "expenses.update",
+        "expense.read", "expense.create", "expense.update", "expense.post", "expense.pay", "expense.manage", "expense.attachments", "expense.reports",
+        "banking.read", "banking.manage", "banking.import", "banking.match", "banking.reconcile", "banking.transfer",
+        "accounting.read", "accounting.manage",
+        "reports.read", "reports.export",
+      ]),
     },
-  });
-
-  // Categories
-  const catMedicines = await prisma.category.create({
-    data: {
-      name: "Medicines",
-      slug: "medicines",
-      description: "Prescription and over-the-counter pharmaceutical drugs",
-      image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&q=80",
+    {
+      name: "Member",
+      description: "Standard team member operational access.",
+      permCodes: getPermIds([
+        "organization.view",
+        "customers.read", "customers.create",
+        "invoices.read", "invoices.create",
+        "estimates.read", "estimates.create",
+        "products.read",
+        "inventory.read",
+        "expense.read", "expense.create", "expense.update", "expense.submit", "expense.attachments",
+      ]),
     },
-  });
-
-  const catOtc = await prisma.category.create({
-    data: {
-      name: "OTC Products",
-      slug: "otc-products",
-      description: "Over-the-counter health remedies, pain relievers, cold & flu",
-      image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=500&q=80",
+    {
+      name: "Viewer",
+      description: "Read-only access across standard business modules.",
+      permCodes: getPermIds([
+        "organization.view",
+        "users.view",
+        "customers.read",
+        "invoices.read",
+        "estimates.read",
+        "vendors.read",
+        "purchases.read",
+        "products.read",
+        "inventory.read",
+        "expenses.read",
+        "expense.read",
+        "reports.read",
+      ]),
     },
+  ];
+
+  const createdRolesMap = new Map<string, string>();
+  for (const roleDef of systemRoles) {
+    let role = await prisma.role.findFirst({
+      where: { organizationId: null, name: roleDef.name },
+    });
+
+    if (!role) {
+      role = await prisma.role.create({
+        data: {
+          name: roleDef.name,
+          description: roleDef.description,
+          isSystem: true,
+          organizationId: null,
+        },
+      });
+    }
+
+    createdRolesMap.set(roleDef.name, role.id);
+
+    // Link Role Permissions
+    for (const permId of roleDef.permCodes) {
+      await prisma.rolePermission.upsert({
+        where: { roleId_permissionId: { roleId: role.id, permissionId: permId } },
+        update: {},
+        create: { roleId: role.id, permissionId: permId },
+      });
+    }
+  }
+
+  // 3. Seed Demo Organization
+  console.log("Creating demo organization...");
+  let demoOrg = await prisma.organization.findFirst({
+    where: { name: "Acme Global Enterprises" },
   });
 
-  const catRx = await prisma.category.create({
-    data: {
-      name: "Prescription Medicines",
-      slug: "prescription-medicines",
-      description: "Requires valid physician prescription verified by a licensed pharmacist",
-      image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=500&q=80",
-    },
-  });
-
-  const catVitamins = await prisma.category.create({
-    data: {
-      name: "Vitamins & Supplements",
-      slug: "vitamins-supplements",
-      description: "Multivitamins, minerals, herbal extracts, and immunity boosters",
-      image: "https://images.unsplash.com/photo-1577401239170-897942555fb3?w=500&q=80",
-    },
-  });
-
-  const catPersonal = await prisma.category.create({
-    data: {
-      name: "Personal Care",
-      slug: "personal-care",
-      description: "Body wash, soaps, deodorants, and daily essentials",
-      image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&q=80",
-    },
-  });
-
-  const catSkincare = await prisma.category.create({
-    data: {
-      name: "Skincare",
-      slug: "skincare",
-      description: "Dermatological cleansers, moisturizers, serums, and sun protection",
-      image: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500&q=80",
-    },
-  });
-
-  const catHair = await prisma.category.create({
-    data: {
-      name: "Hair Care",
-      slug: "hair-care",
-      description: "Shampoos, conditioners, anti-dandruff solutions, and scalp treatments",
-      image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&q=80",
-    },
-  });
-
-  const catOral = await prisma.category.create({
-    data: {
-      name: "Oral Care",
-      slug: "oral-care",
-      description: "Toothpaste, electric toothbrushes, mouthwash, and dental floss",
-      image: "https://images.unsplash.com/photo-1559591937-e58af1009851?w=500&q=80",
-    },
-  });
-
-  const catHygiene = await prisma.category.create({
-    data: {
-      name: "Hygiene Products",
-      slug: "hygiene-products",
-      description: "Hand sanitizers, wipes, antiseptic liquids, and feminine care",
-      image: "https://images.unsplash.com/photo-1584483766114-2cea6facdf57?w=500&q=80",
-    },
-  });
-
-  const catBaby = await prisma.category.create({
-    data: {
-      name: "Baby & Mother Care",
-      slug: "baby-mother-care",
-      description: "Infant formula, diapers, baby wipes, and maternal supplements",
-      image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=500&q=80",
-    },
-  });
-
-  const catDevices = await prisma.category.create({
-    data: {
-      name: "Medical Devices",
-      slug: "medical-devices",
-      description: "Blood pressure monitors, thermometers, pulse oximeters, blood glucose meters",
-      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=500&q=80",
-    },
-  });
-
-  const catWellness = await prisma.category.create({
-    data: {
-      name: "Wellness Products",
-      slug: "wellness-products",
-      description: "Aromatherapy, massage oils, orthopedic pillows, and fitness recovery",
-      image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=500&q=80",
-    },
-  });
-
-  // Brands
-  const brandPfizer = await prisma.brand.create({
-    data: { name: "Pfizer", slug: "pfizer", description: "Global pharmaceutical leader" },
-  });
-
-  const brandBayer = await prisma.brand.create({
-    data: { name: "Bayer", slug: "bayer", description: "Trusted consumer health & OTC remedies" },
-  });
-
-  const brandCeraVe = await prisma.brand.create({
-    data: { name: "CeraVe", slug: "cerave", description: "Dermatologist-developed skincare" },
-  });
-
-  const brandCentrum = await prisma.brand.create({
-    data: { name: "Centrum", slug: "centrum", description: "World's #1 multivitamin brand" },
-  });
-
-  const brandOmron = await prisma.brand.create({
-    data: { name: "Omron Healthcare", slug: "omron", description: "Precision home medical monitoring equipment" },
-  });
-
-  // Products
-  const prodAmoxicillin = await prisma.product.create({
-    data: {
-      name: "Amoxicillin 500mg Capsules (21s)",
-      slug: "amoxicillin-500mg-capsules",
-      description: "Broad-spectrum penicillin antibiotic used to treat bacterial infections. Requires pharmacist prescription verification.",
-      sku: "RX-AMOX-500",
-      price: 18.99,
-      salePrice: 15.49,
-      stockQuantity: 120,
-      isPrescriptionRequired: true,
-      dosageForm: "Capsule",
-      activeIngredients: "Amoxicillin Trihydrate 500mg",
-      usageInstructions: "Take 1 capsule every 8 hours as directed by physician. Finish complete course.",
-      warnings: "Do not use if allergic to penicillins or cephalosporins. May cause stomach upset.",
-      imageUrl: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=600&q=80",
-      categoryId: catRx.id,
-      brandId: brandPfizer.id,
-      ratingAverage: 4.8,
-      ratingCount: 42,
-      isFeatured: true,
-    },
-  });
-
-  const prodAtorvastatin = await prisma.product.create({
-    data: {
-      name: "Lipitor (Atorvastatin) 20mg Tablets (30s)",
-      slug: "lipitor-atorvastatin-20mg-tablets",
-      description: "Statin medication used to lower cholesterol and reduce cardiovascular disease risk.",
-      sku: "RX-LIP-020",
-      price: 34.50,
-      stockQuantity: 85,
-      isPrescriptionRequired: true,
-      dosageForm: "Tablet",
-      activeIngredients: "Atorvastatin Calcium 20mg",
-      usageInstructions: "Take 1 tablet daily in the evening with or without food.",
-      warnings: "Avoid grapefruit juice while taking this medication. Regular blood testing required.",
-      imageUrl: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80",
-      categoryId: catRx.id,
-      brandId: brandPfizer.id,
-      ratingAverage: 4.9,
-      ratingCount: 56,
-      isFeatured: true,
-    },
-  });
-
-  const prodAspirin = await prisma.product.create({
-    data: {
-      name: "Bayer Extra Strength Aspirin 500mg (100 Caplets)",
-      slug: "bayer-extra-strength-aspirin-500mg",
-      description: "Fast relief for headache, minor arthritis pain, muscle ache, and fever.",
-      sku: "OTC-BAY-500",
-      price: 11.99,
-      salePrice: 9.99,
-      stockQuantity: 250,
-      isPrescriptionRequired: false,
-      dosageForm: "Caplet",
-      activeIngredients: "Aspirin 500mg (NSAID)",
-      usageInstructions: "Take 1 to 2 caplets every 4 to 6 hours with a full glass of water. Max 8 caplets in 24 hours.",
-      warnings: "Contains NSAID. Stomach bleeding warning. Keep out of reach of children.",
-      imageUrl: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=600&q=80",
-      categoryId: catOtc.id,
-      brandId: brandBayer.id,
-      ratingAverage: 4.7,
-      ratingCount: 128,
-      isFeatured: true,
-    },
-  });
-
-  const prodCentrumMulti = await prisma.product.create({
-    data: {
-      name: "Centrum Adults Complete Multivitamin (130 Tablets)",
-      slug: "centrum-adults-complete-multivitamin",
-      description: "Formulated with 23 key essential micronutrients to support energy, immunity, and metabolism.",
-      sku: "VIT-CEN-130",
-      price: 19.49,
-      salePrice: 16.99,
-      stockQuantity: 180,
-      isPrescriptionRequired: false,
-      dosageForm: "Tablet",
-      activeIngredients: "Vitamins A, C, D3, E, K, B6, B12, Zinc, Iron, Magnesium",
-      usageInstructions: "Take 1 tablet daily with food.",
-      warnings: "Accidental overdose of iron-containing products is a leading cause of fatal poisoning in children under 6.",
-      imageUrl: "https://images.unsplash.com/photo-1577401239170-897942555fb3?w=600&q=80",
-      categoryId: catVitamins.id,
-      brandId: brandCentrum.id,
-      ratingAverage: 4.9,
-      ratingCount: 310,
-      isFeatured: true,
-    },
-  });
-
-  const prodCeraVeCleanser = await prisma.product.create({
-    data: {
-      name: "CeraVe Hydrating Facial Cleanser 473ml",
-      slug: "cerave-hydrating-facial-cleanser-473ml",
-      description: "Non-foaming cleanser with 3 essential ceramides and hyaluronic acid for normal to dry skin.",
-      sku: "SKIN-CER-473",
-      price: 16.99,
-      stockQuantity: 95,
-      isPrescriptionRequired: false,
-      dosageForm: "Lotion Cleanser",
-      activeIngredients: "Ceramides 1, 3, 6-II, Hyaluronic Acid, Glycerin",
-      usageInstructions: "Wet skin with lukewarm water. Massage cleanser into skin in a gentle circular motion. Rinse.",
-      warnings: "For external use only. Avoid direct contact with eyes.",
-      imageUrl: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&q=80",
-      categoryId: catSkincare.id,
-      brandId: brandCeraVe.id,
-      ratingAverage: 4.9,
-      ratingCount: 450,
-      isFeatured: true,
-    },
-  });
-
-  const prodOmronBp = await prisma.product.create({
-    data: {
-      name: "Omron 10 Series Wireless Upper Arm Blood Pressure Monitor",
-      slug: "omron-10-series-blood-pressure-monitor",
-      description: "Clinically validated digital monitor featuring dual display, Bluetooth sync, and irregular heartbeat detector.",
-      sku: "DEV-OMR-10S",
-      price: 89.99,
-      salePrice: 74.99,
-      stockQuantity: 40,
-      isPrescriptionRequired: false,
-      dosageForm: "Electronic Device",
-      activeIngredients: "N/A",
-      usageInstructions: "Wrap cuff around upper arm at heart height. Press START button. Sit quietly during measurement.",
-      warnings: "Consult a healthcare provider to interpret blood pressure readings.",
-      imageUrl: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80",
-      categoryId: catDevices.id,
-      brandId: brandOmron.id,
-      ratingAverage: 4.8,
-      ratingCount: 89,
-      isFeatured: true,
-    },
-  });
-
-  // Coupons
-  await prisma.coupon.create({
-    data: {
-      code: "HEALTH10",
-      discountType: "PERCENTAGE",
-      discountValue: 10,
-      minOrderAmount: 30,
-      isActive: true,
-    },
-  });
-
-  await prisma.coupon.create({
-    data: {
-      code: "WELCOME5",
-      discountType: "FIXED",
-      discountValue: 5,
-      minOrderAmount: 20,
-      isActive: true,
-    },
-  });
-
-  // Refill Reminder
-  await prisma.refillReminder.create({
-    data: {
-      userId: customer.id,
-      productId: prodAtorvastatin.id,
-      frequencyDays: 30,
-      nextRefillDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-      notes: "Take 1 pill nightly for cholesterol",
-      isActive: true,
-    },
-  });
-
-  // Sample Prescription
-  const prescription = await prisma.prescription.create({
-    data: {
-      userId: customer.id,
-      patientName: "John Doe",
-      patientAge: 45,
-      fileUrl: "/storage/prescriptions/sample-rx-101.pdf",
-      fileName: "John_Doe_Prescription_Aug2026.pdf",
-      fileMimeType: "application/pdf",
-      status: "APPROVED",
-      pharmacistNotes: "Verified with Dr. Smith's office. Valid for 3 refills.",
-      reviewedById: pharmacist.id,
-      reviewedAt: new Date(),
-    },
-  });
-
-  // Sample Order
-  const order = await prisma.order.create({
-    data: {
-      orderNumber: "ORD-2026-884920",
-      userId: customer.id,
-      addressId: address.id,
-      shippingAddressJson: JSON.stringify(address),
-      status: "PROCESSING",
-      paymentStatus: "PAID",
-      paymentMethod: "CARD",
-      subtotal: 51.49,
-      discountAmount: 5.0,
-      shippingFee: 4.99,
-      totalAmount: 51.48,
-      prescriptionId: prescription.id,
-      deliveryAgentName: "Express Pharmacy Courier",
-      estimatedDelivery: "Aug 31, 2026",
-      items: {
-        create: [
-          {
-            productId: prodAmoxicillin.id,
-            productName: prodAmoxicillin.name,
-            unitPrice: 15.49,
-            quantity: 1,
-            isPrescriptionRequired: true,
-            totalPrice: 15.49,
-          },
-          {
-            productId: prodAspirin.id,
-            productName: prodAspirin.name,
-            unitPrice: 9.99,
-            quantity: 2,
-            isPrescriptionRequired: false,
-            totalPrice: 19.98,
-          },
-          {
-            productId: prodCeraVeCleanser.id,
-            productName: prodCeraVeCleanser.name,
-            unitPrice: 16.99,
-            quantity: 1,
-            isPrescriptionRequired: false,
-            totalPrice: 16.99,
-          },
-        ],
+  if (!demoOrg) {
+    demoOrg = await prisma.organization.create({
+      data: {
+        name: "Acme Global Enterprises",
+        legalName: "Acme Global Enterprises LLC",
+        description: "Global manufacturing, distribution, and logistics platform.",
+        registrationNumber: "CRN-98765432",
+        taxId: "US-987654321",
+        email: "contact@acmeglobal.com",
+        phone: "+1 (555) 019-2834",
+        website: "https://acmeglobal.com",
+        currency: "USD",
+        timezone: "America/New_York",
+        addressLine1: "100 Innovation Way",
+        addressLine2: "Suite 400",
+        city: "Austin",
+        state: "TX",
+        postalCode: "78701",
+        country: "US",
+        fiscalYearStart: 1,
+        onboardingCompleted: true,
+        onboardingStep: 6,
       },
-    },
-  });
+    });
+  }
 
-  // Sample Review
-  await prisma.review.create({
-    data: {
-      userId: customer.id,
-      productId: prodAspirin.id,
-      rating: 5,
-      comment: "Works fast for headaches. Trusted Bayer quality.",
-      isApproved: true,
-    },
-  });
-
-  // Support Ticket
-  const ticket = await prisma.supportTicket.create({
-    data: {
-      ticketNumber: "TCK-99201",
-      userId: customer.id,
-      orderId: order.id,
-      subject: "Inquiry about prescription delivery timing",
-      category: "Order Delivery",
-      status: "IN_PROGRESS",
-      priority: "Normal",
-      messages: {
-        create: [
-          {
-            senderId: customer.id,
-            message: "Hello, when will my prescription order be dispatched?",
-          },
-          {
-            senderId: pharmacist.id,
-            message: "Hello John, your prescription was verified and approved by Dr. Jenkins. Your order is currently being packed and will be handed to Express Courier today.",
-          },
-        ],
+  if (demoOrg) {
+    await prisma.organizationSettings.upsert({
+      where: { organizationId: demoOrg.id },
+      update: {},
+      create: {
+        organizationId: demoOrg.id,
+        dateFormat: "YYYY-MM-DD",
+        timeFormat: "24h",
+        numberFormat: "comma_dot",
+        invoicePrefix: "INV-",
+        estimatePrefix: "EST-",
+        purchaseOrderPrefix: "PO-",
+        billPrefix: "BILL-",
+        nextInvoiceNumber: 1001,
+        nextEstimateNumber: 1001,
+        nextPurchaseOrderNumber: 1001,
       },
-    },
-  });
+    });
+  }
 
-  console.log("Seeding complete! Created Admin, Pharmacist, Customer, Categories, Brands, Products, Prescription, Order, Ticket.");
+  // 4. Seed Demo Users
+  console.log("Creating demo users...");
+  const passwordHash = await bcrypt.hash("Password123!", 12);
+
+  const demoUsers = [
+    {
+      email: "owner@acme.com",
+      name: "Eleanor Vance (Owner)",
+      phone: "+1 (555) 101-2020",
+      roleName: "Owner",
+    },
+    {
+      email: "admin@acme.com",
+      name: "Marcus Brody (Admin)",
+      phone: "+1 (555) 101-3030",
+      roleName: "Admin",
+    },
+    {
+      email: "staff@acme.com",
+      name: "Sarah Chen (Staff Member)",
+      phone: "+1 (555) 101-4040",
+      roleName: "Member",
+    },
+  ];
+
+  for (const u of demoUsers) {
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: { name: u.name },
+      create: {
+        email: u.email,
+        name: u.name,
+        passwordHash: passwordHash,
+        phone: u.phone,
+        emailVerified: true,
+      },
+    });
+
+    const roleId = createdRolesMap.get(u.roleName);
+    if (roleId && demoOrg) {
+      await prisma.organizationMember.upsert({
+        where: { organizationId_userId: { organizationId: demoOrg.id, userId: user.id } },
+        update: { roleId },
+        create: {
+          organizationId: demoOrg.id,
+          userId: user.id,
+          roleId,
+          status: "ACTIVE",
+        },
+      });
+    }
+  }
+
+  // 5. Initial Audit Log Entry
+  if (demoOrg) {
+    const ownerUser = await prisma.user.findUnique({ where: { email: "owner@acme.com" } });
+    await prisma.auditLog.create({
+      data: {
+        organizationId: demoOrg.id,
+        actorId: ownerUser?.id,
+        action: "organization.created",
+        entityType: "Organization",
+        entityId: demoOrg.id,
+        metadata: { info: "Initial demo seed organization created" },
+      },
+    });
+  }
+
+  // 6. Phase 7: Expense Management Master Data (COA, Mappings, Categories)
+  console.log("Seeding Phase 7 Expense Management Master Data...");
+  const organizations = await prisma.organization.findMany();
+  for (const org of organizations) {
+    const result = await ExpenseMasterDataService.provisionOrganizationDefaults(prisma, org.id);
+    console.log(
+      `  → ${org.name}: ${result.accountsCreated} accounts created, mapping ${result.mappingCreated ? "initialized" : "preserved"}, ${result.categoriesCreated} categories created`
+    );
+  }
+
+  console.log("✅ Seed completed successfully!");
+  console.log("Demo Credentials:");
+  console.log("  Owner: owner@acme.com / Password123!");
+  console.log("  Admin: admin@acme.com / Password123!");
+  console.log("  Staff: staff@acme.com / Password123!");
 }
 
 main()
   .catch((e) => {
-    console.error("Error seeding:", e);
+    console.error("❌ Seeding failed:", e);
     process.exit(1);
   })
   .finally(async () => {

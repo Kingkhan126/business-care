@@ -1,149 +1,131 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
 import Link from "next/link";
-import { Pill, Lock, Mail, User, Phone, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
+import { Alert } from "@/components/ui/Alert";
+import { Lock, Mail, User, Building2 } from "lucide-react";
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [organizationName, setOrganizationName] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    setIsLoading(true);
 
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, password }),
+        body: JSON.stringify({ name, email, password, organizationName }),
       });
+
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Registration failed.");
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Registration failed");
       }
-      window.location.href = "/";
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create account");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 sm:p-6 lg:p-8 font-sans">
+      <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center space-x-3">
-            <div className="w-10 h-10 shrink-0">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <path d="M 18,38 H 38 V 18 H 50 V 82 H 38 V 62 H 18 Z" fill="#62B834" />
-                <path d="M 50,18 H 62 V 38 H 82 V 62 H 62 V 82 H 50 Z" fill="#3B5488" />
-                <circle cx="50" cy="50" r="15" fill="white" />
-                <path d="M 43,50 H 57 M 50,43 V 57" stroke="#3B5488" strokeWidth="4.5" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div className="flex flex-col text-left">
-              <div className="text-xl font-extrabold tracking-tight leading-none flex items-center">
-                <span className="text-[#3B5488]">AD&nbsp;</span>
-                <span className="text-[#62B834]">CARE</span>
-              </div>
-              <span className="text-[11px] font-bold text-[#3B5488] tracking-tight block mt-0.5">
-                Meds & Pharmacy
-              </span>
-            </div>
-          </Link>
-          <h1 className="text-lg font-bold text-slate-900 pt-2">Create Customer Account</h1>
-          <p className="text-xs text-slate-500">Register to order medicines and manage prescriptions</p>
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-xl shadow-md">
+            B
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Create Business Organization
+          </h1>
+          <p className="text-xs text-slate-500 max-w-xs mx-auto">
+            Set up your organization tenant and owner account.
+          </p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-xs">
-            {error}
-          </div>
-        )}
+        <Card className="shadow-lg border-slate-200">
+          <CardHeader>
+            <CardTitle>Organization Setup</CardTitle>
+            <CardDescription>
+              Enter business and owner identity details.
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              {error && (
+                <Alert variant="error" title="Registration Error">
+                  {error}
+                </Alert>
+              )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Full Name</label>
-            <div className="relative">
-              <input
-                type="text"
+              <Input
+                label="Organization / Business Name"
+                placeholder="e.g. Acme Global Logistics"
+                value={organizationName}
+                onChange={(e) => setOrganizationName(e.target.value)}
+                leftIcon={<Building2 className="h-4 w-4" />}
                 required
-                placeholder="Jane Doe"
+              />
+
+              <Input
+                label="Your Full Name (Owner)"
+                placeholder="Eleanor Vance"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs"
-              />
-              <User className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Email Address</label>
-            <div className="relative">
-              <input
-                type="email"
+                leftIcon={<User className="h-4 w-4" />}
                 required
-                placeholder="jane@example.com"
+              />
+
+              <Input
+                label="Work Email Address"
+                type="email"
+                placeholder="owner@acmeglobal.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs"
-              />
-              <Mail className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Phone Number</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="+1-555-0199"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs"
-              />
-              <Phone className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Password</label>
-            <div className="relative">
-              <input
-                type="password"
+                leftIcon={<Mail className="h-4 w-4" />}
                 required
-                placeholder="At least 10 characters with numbers"
+              />
+
+              <Input
+                label="Password"
+                type="password"
+                placeholder="Min 8 chars, 1 uppercase, 1 number"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs"
+                leftIcon={<Lock className="h-4 w-4" />}
+                required
               />
-              <Lock className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center space-x-2 text-xs disabled:opacity-50"
-          >
-            <span>{loading ? "Creating Account..." : "Create Account"}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </form>
-
-        <div className="text-center text-xs text-slate-500">
-          Already have an account?{" "}
-          <Link href="/login" className="font-bold text-teal-700 hover:underline">
-            Sign In Here
-          </Link>
-        </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-3">
+              <Button type="submit" className="w-full" isLoading={isLoading}>
+                Create Organization & Account
+              </Button>
+              <p className="text-center text-xs text-slate-500">
+                Already registered?{" "}
+                <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-500">
+                  Sign In
+                </Link>
+              </p>
+            </CardFooter>
+          </form>
+        </Card>
       </div>
     </div>
   );

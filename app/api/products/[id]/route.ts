@@ -1,28 +1,58 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db/prisma";
+import { getCurrentSessionUser } from "@/lib/auth/session";
+import { ProductService } from "@/server/services/ProductService";
+import { ProductSchema } from "@/lib/validation/master_data";
+import { AppError, UnauthorizedError } from "@/lib/errors";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const product = await prisma.product.findUnique({
-      where: { id: params.id },
-      include: {
-        category: true,
-        brand: true,
-        reviews: {
-          include: {
-            user: { select: { id: true, name: true } },
-          },
-          orderBy: { createdAt: "desc" },
-        },
-      },
-    });
+    const user = await getCurrentSessionUser();
+    if (!user) throw new UnauthorizedError();
 
-    if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    const product = await ProductService.getById(user, params.id);
+    return NextResponse.json(product);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const user = await getCurrentSessionUser();
+    if (!user) throw new UnauthorizedError();
+
+    const body = await request.json();
+    const validated = ProductSchema.partial().parse(body);
+
+    const updated = await ProductService.update(user, params.id, validated);
+    return NextResponse.json(updated);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const user = await getCurrentSessionUser();
+    if (!user) throw new UnauthorizedError();
+
+    const body = await request.json();
+    if (!body.status || !["ACTIVE", "INACTIVE"].includes(body.status)) {
+      return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
     }
 
-    return NextResponse.json({ product });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to fetch product" }, { status: 500 });
+    const updated = await ProductService.updateStatus(user, params.id, body.status);
+    return NextResponse.json(updated);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
