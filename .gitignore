@@ -36,3 +36,4 @@ Thumbs.db
 # TypeScript / Vitest cache
 *.tsbuildinfo
 .vitest/
+.snapshots/

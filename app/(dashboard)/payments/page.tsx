@@ -227,8 +227,8 @@ export default function PaymentsPage() {
                   <td className="px-6 py-4 font-medium text-slate-900">{p.customer?.displayName}</td>
                   <td className="px-6 py-4">{new Date(p.paymentDate).toLocaleDateString()}</td>
                   <td className="px-6 py-4 font-mono text-xs">{p.paymentMethod}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-900">${Number(p.amount).toFixed(2)}</td>
-                  <td className="px-6 py-4 font-semibold text-emerald-600">${Number(p.unallocatedAmount).toFixed(2)}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-200">PKR {Number(p.amount).toFixed(2)}</td>
+                  <td className="px-6 py-4 font-semibold text-emerald-400">PKR {Number(p.unallocatedAmount).toFixed(2)}</td>
                   <td className="px-6 py-4 text-right">
                     {Number(p.unallocatedAmount) > 0 && (
                       <button
@@ -282,7 +282,7 @@ export default function PaymentsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700">Amount ($) *</label>
+                  <label className="block text-xs font-medium text-slate-700">Amount (PKR) *</label>
                   <input
                     type="number"
                     required
@@ -347,7 +347,7 @@ export default function PaymentsPage() {
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="text-lg font-bold text-slate-900 mb-1">Allocate Payment #{selectedPayment.paymentNumber}</h2>
             <p className="text-xs text-slate-500 mb-4">
-              Customer: {selectedPayment.customer?.displayName} | Available: ${Number(selectedPayment.unallocatedAmount).toFixed(2)}
+              Customer: {selectedPayment.customer?.displayName} | Available: PKR {Number(selectedPayment.unallocatedAmount).toFixed(2)}
             </p>
             {error && <div className="mb-4 rounded-lg bg-rose-50 p-3 text-xs text-rose-600">{error}</div>}
 
@@ -369,14 +369,14 @@ export default function PaymentsPage() {
                   <option value="">Select Open Invoice...</option>
                   {openInvoices.map((inv) => (
                     <option key={inv.id} value={inv.id}>
-                      {inv.invoiceNumber} - Balance Due: ${Number(inv.balanceDue).toFixed(2)}
+                      {inv.invoiceNumber} - Balance Due: PKR {Number(inv.balanceDue).toFixed(2)}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700">Allocation Amount ($) *</label>
+                <label className="block text-xs font-medium text-slate-700">Allocation Amount (PKR) *</label>
                 <input
                   type="number"
                   required

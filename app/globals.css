@@ -206,28 +206,32 @@ body {
 /* ─── Clean Print Stylesheet for Invoices & Reports ─── */
 @media print {
   @page {
-    margin: 12mm 15mm;
-    size: auto;
+    margin: 8mm 10mm;
+    size: A4 portrait;
   }
 
-  body {
+  html, body {
     background: #ffffff !important;
     color: #0f172a !important;
-    font-size: 12pt;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Hide app navigation, sidebar, chat widgets, header, backdrop */
   header,
   aside,
   nav,
-  .print\\:hidden,
+  .print\:hidden,
+  [class*="print:hidden"],
   button:not(.print-allow) {
     display: none !important;
   }
 
   /* Make printable area fill page cleanly */
   #invoice-printable-area {
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;

@@ -204,6 +204,20 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleOpenPrint = async (inv: SalesInvoice) => {
+    setPrintInvoice(inv as any);
+    setIsPrintModalOpen(true);
+    try {
+      const res = await fetch(`/api/invoices/${inv.id}`);
+      if (res.ok) {
+        const fullData = await res.json();
+        setPrintInvoice(fullData);
+      }
+    } catch (e) {
+      console.error("Failed to fetch full invoice lines", e);
+    }
+  };
+
   const handleIssueInvoice = async (id: string) => {
     try {
       const res = await fetch(`/api/invoices/${id}/issue`, { method: "POST" });
@@ -321,10 +335,7 @@ export default function InvoicesPage() {
                   </td>
                   <td className="px-6 py-4 text-right space-x-3 whitespace-nowrap">
                     <button
-                      onClick={() => {
-                        setPrintInvoice(inv);
-                        setIsPrintModalOpen(true);
-                      }}
+                      onClick={() => handleOpenPrint(inv)}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
                       title="Print or share invoice with customer"
                     >
