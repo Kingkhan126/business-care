@@ -32,6 +32,7 @@ export function deployMigrations(env = process.env) {
     "--to-schema-datamodel", "prisma/migrations/0_init/schema.prisma",
     "--exit-code",
   ], migrationEnv);
+  console.log(`Initial schema comparison completed (exit code: ${diff.status ?? "unavailable"}, signal: ${diff.signal || "none"}).`);
   if (diff.status !== 0) {
     // Another deployment may have completed while this one checked the schema.
     if (diff.status === 2 && prisma(["migrate", "deploy"], migrationEnv).status === 0) return 0;
@@ -58,5 +59,7 @@ export function runVercelBuild(env = process.env) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exit(process.argv.includes("--migrate-only") ? deployMigrations() : runVercelBuild());
+  // Let pending stdout/stderr writes finish before Node exits, including on build failure.
+  process.exitCode = process.argv.includes("--migrate-only") ? deployMigrations() : runVercelBuild();
+  if (process.exitCode !== 0) console.error(`Release stopped (exit code: ${process.exitCode}). See the preceding migration or build diagnostics.`);
 }

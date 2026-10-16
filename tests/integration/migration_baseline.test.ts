@@ -56,6 +56,8 @@ describe("Existing database migration adoption", () => {
     const result = run(["scripts/vercel-build.mjs", "--migrate-only"], env);
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("Baseline verification failed");
+    expect(result.stdout).toContain("Initial schema comparison completed (exit code: 2");
+    expect(result.stderr).toContain("Release stopped (exit code: 1)");
     expect(await client.user.count()).toBe(1);
     const migrations = await client.$queryRaw<Array<{ exists: boolean }>>`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = '_prisma_migrations') AS exists`;
     expect(migrations[0].exists).toBe(false);
