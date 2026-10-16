@@ -15,6 +15,8 @@ import { BankImportService } from "@/server/services/BankImportService";
 import { BankReconciliationService } from "@/server/services/BankReconciliationService";
 import { OrganizationSettingsRepository } from "@/server/repositories/OrganizationSettingsRepository";
 import { AccountingPeriodService } from "@/server/services/AccountingPeriodService";
+import { CustomerService } from "@/server/services/CustomerService";
+import { CustomerSchema } from "@/lib/validation/master_data";
 
 describe("PostgreSQL reliability regressions", () => {
   const run = randomUUID();
@@ -72,6 +74,14 @@ describe("PostgreSQL reliability regressions", () => {
   });
 
   const invoiceInput = () => ({ customerId, issueDate: date, dueDate: date, currency: "USD", lines: [{ description: "Consulting", quantity: 1, unitPrice: 100 }] });
+
+  it("saves a PKR customer from the customer form with an automatically allocated number", async () => {
+    const input = CustomerSchema.parse({ displayName: "Customer save regression", legalName: "Example", contactPerson: "", email: "customer@test.invalid", phone: "0479121852", billingCity: "Peshawar", billingCountry: "Pakistan", currency: "PKR", notes: "" });
+    const created = await CustomerService.create({ ...user, permissions: [...user.permissions, "customers.create"] }, input);
+    expect(created.customerNumber).toMatch(/^CUS-\d+$/);
+    expect(created.currency).toBe("PKR");
+    expect(await db.customer.findUnique({ where: { id: created.id } })).not.toBeNull();
+  });
 
   it("initializes organization settings safely during concurrent first visits", async () => {
     const settings = await Promise.all(Array.from({ length: 8 }, () => OrganizationSettingsRepository.findByOrganizationId(user.activeOrganizationId!)));

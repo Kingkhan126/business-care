@@ -69,3 +69,5 @@ Configure PostgreSQL, a production `AUTH_SECRET` of at least 32 characters, and 
 The document counter migration is required for document creation. It allocates numbers atomically within each document transaction and initializes above existing imported numbers. Deploy every writer together; older application versions still use count-based numbering and must not keep writing during the rollout.
 
 The dashboard labels receivables, unpaid expenses, and cash totals in the organization's currency and excludes other currencies from those totals. Individual bank accounts retain their own currency. No exchange rate is assumed.
+
+Vercel uses the committed `vercel.json` build command (`npm run vercel-build`) to apply migrations before building the new release. Set `DIRECT_URL` for migrations if the runtime URL uses a pooler, and use a separate database for each preview environment. `/api/health` checks both database connectivity and the required numbering table.

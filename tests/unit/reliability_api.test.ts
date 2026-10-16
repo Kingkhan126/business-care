@@ -26,6 +26,16 @@ describe("API validation and safe errors", () => {
     expect(apiErrorResponse(new ForbiddenError()).status).toBe(403);
     expect(apiErrorResponse({ code: "P2002", meta: "sensitive-table" }).status).toBe(409);
   });
+  it("returns a temporary service error for missing migrations without leaking database details", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    for (const error of [{ code: "P2021", meta: { table: "private_table" } }, { code: "P2010", meta: { code: "42P01", message: "private database details" } }]) {
+      const response = apiErrorResponse(error);
+      expect(response.status).toBe(503);
+      const body = await response.json();
+      expect(body.code).toBe("DATABASE_NOT_READY");
+      expect(JSON.stringify(body)).not.toContain("private");
+    }
+  });
   it("does not leak unexpected database errors or request values", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const response = apiErrorResponse(new Error("passwordHash=private, database credentials"));

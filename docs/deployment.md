@@ -128,15 +128,17 @@ To ensure uploaded expense receipts, invoices, and organization logos persist ac
 1. **Import Repository:** Connect GitHub/GitLab repository to Vercel.
 2. **Framework Preset:** Select `Next.js`.
 3. **Build & Output Settings:**
-   - Build Command: `npm run build`
+   - Build Command: `npm run vercel-build` (also enforced by committed `vercel.json`)
    - Install Command: `npm install`
 4. **Environment Variables:**
    - Add `DATABASE_URL`, `AUTH_SECRET`, `NODE_ENV=production`, `APP_URL`.
    - Add S3 storage variables (`S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`).
 5. **Database Migration Step:**
-   - Run `npx prisma migrate deploy` in your CI/CD pipeline or via deployment hook before traffic cutover.
+   - `npm run vercel-build` regenerates Prisma, applies committed migrations, and builds Next.js in that order. A migration failure stops the release.
+   - When the runtime URL uses a transaction pooler, configure `DIRECT_URL` with a direct connection for migrations. The runtime keeps using `DATABASE_URL`.
+   - Preview deployments must use their own database or database branch. Never point an untrusted preview build at the production database.
 6. **Deploy & Verify:**
-   - Verify health check at `https://your-domain.vercel.app/api/health` returns status `200` with `status: "healthy"`.
+   - Verify health check at `https://your-domain.vercel.app/api/health` returns status `200` with `status: "healthy"` and `schema: "ready"`.
 
 ---
 
