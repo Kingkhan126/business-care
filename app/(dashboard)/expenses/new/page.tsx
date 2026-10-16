@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useWorkspaceCurrency } from "@/components/layout/WorkspaceCurrency";
+import { refreshDashboardAfterSave } from "@/app/actions/refresh-dashboard";
 
 interface LineItemState {
   categoryId?: string;
@@ -218,6 +219,7 @@ export default function CreateExpensePage() {
         throw new Error(json.error || "Failed to create expense");
       }
 
+      await refreshDashboardAfterSave().catch(() => router.refresh());
       router.push(`/expenses/${json.id}`);
     } catch (err: any) {
       setErrorMsg(err.message || "An unexpected error occurred while saving the expense.");

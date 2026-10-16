@@ -15,8 +15,8 @@ export default async function DashboardPage() {
   const { organization, access } = data;
   const format = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: organization.currency }).format(amount);
   const activities: ActivityItem[] = [
-    ...data.invoices.map(inv => ({ id: `inv-${inv.id}`, type: "INVOICE" as const, title: inv.invoiceNumber, party: inv.customer.displayName, date: inv.issueDate.toISOString(), amount: Number(inv.total), status: inv.status, href: "/invoices" })),
-    ...data.expenses.map(exp => ({ id: `exp-${exp.id}`, type: "EXPENSE" as const, title: exp.expenseNumber, party: exp.category?.name || "Expense", date: exp.expenseDate.toISOString(), amount: Number(exp.total), status: exp.status, href: `/expenses/${exp.id}` })),
+    ...data.invoices.map(inv => ({ id: `inv-${inv.id}`, type: "INVOICE" as const, title: inv.invoiceNumber, party: inv.customer.displayName, date: inv.createdAt.toISOString(), amount: Number(inv.total), currency: inv.currency, status: inv.status, href: "/invoices" })),
+    ...data.expenses.map(exp => ({ id: `exp-${exp.id}`, type: "EXPENSE" as const, title: exp.expenseNumber, party: exp.category?.name || "Expense", date: exp.createdAt.toISOString(), amount: Number(exp.total), currency: exp.currency, status: exp.status, href: `/expenses/${exp.id}` })),
   ].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 8);
   return (
     <div className="space-y-6">
@@ -31,11 +31,11 @@ export default async function DashboardPage() {
         {access.invoices && <MetricCard title="Receivables" value={format(data.receivables)} subtitle={`Unpaid invoices in ${organization.currency}`} icon={FileText} accent="amber" href="/invoices" />}
         {access.expenses && <MetricCard title="Unpaid Expenses" value={format(data.unpaidExpenses)} subtitle={`Approved and posted obligations in ${organization.currency}`} icon={Receipt} accent="rose" href="/expenses" />}
       </div>
+      {(access.invoices || access.expenses) && <RecentActivityList activities={activities} currency={organization.currency} />}
       <div className="grid gap-6 lg:grid-cols-2">
         {access.reports && <FinancialOverviewChart data={data.monthlyData} currency={organization.currency} />}
         {access.banking && <BankingLiquidityPanel accounts={data.accounts.map(a => ({ ...a, institutionName: a.institutionName || "Bank", accountNumberMasked: a.accountNumberMasked || "" }))} currency={organization.currency} totalBalance={data.cash} canTransfer={user.permissions.includes("banking.transfer")} canReconcile={user.permissions.includes("banking.reconcile")} />}
       </div>
-      {(access.invoices || access.expenses) && <RecentActivityList activities={activities} currency={organization.currency} />}
       {!Object.values(access).some(Boolean) && <p className="rounded-xl border border-white/10 p-6 text-slate-300">Your workspace is ready. Ask your organization administrator for access to the modules you need.</p>}
     </div>
   );

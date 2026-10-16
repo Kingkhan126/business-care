@@ -4,6 +4,9 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { Plus, Search, Receipt, CheckCircle, Ban, DollarSign, Printer } from "lucide-react";
 import { InvoicePrintModal, InvoicePrintData } from "@/components/invoices/InvoicePrintModal";
+import { useWorkspaceCurrency } from "@/components/layout/WorkspaceCurrency";
+import { useRouter } from "next/navigation";
+import { refreshDashboardAfterSave } from "@/app/actions/refresh-dashboard";
 
 interface Customer {
   id: string;
@@ -92,6 +95,8 @@ function FloatingLedgerIcon() {
 }
 
 export default function InvoicesPage() {
+  const router = useRouter();
+  const currency = useWorkspaceCurrency();
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -174,6 +179,7 @@ export default function InvoicesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerId: selectedCustomer,
+          currency,
           issueDate,
           dueDate,
           notes: notes || undefined,
@@ -187,6 +193,7 @@ export default function InvoicesPage() {
       }
 
       const createdInvoice = await res.json();
+      await refreshDashboardAfterSave().catch(() => router.refresh());
 
       setShowCreateModal(false);
       setSelectedCustomer("");

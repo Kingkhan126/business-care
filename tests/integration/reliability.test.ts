@@ -247,6 +247,29 @@ describe("PostgreSQL reliability regressions", () => {
     expect(summary.organization.currency).toBe("USD");
   });
 
+  it("shows saved drafts and foreign-currency records in dashboard activity without counting them as posted revenue", async () => {
+    const org = await db.organization.create({ data: { name: `Draft visibility ${run}`, currency: "PKR" } });
+    try {
+      const customer = await db.customer.create({ data: { organizationId: org.id, customerNumber: "CUS-1", displayName: "Draft customer", currency: "PKR" } });
+      const invoiceData = { organizationId: org.id, customerId: customer.id, createdById: user.id, issueDate: date, dueDate: date, total: 60, balanceDue: 60 };
+      await db.salesInvoice.create({ data: { ...invoiceData, invoiceNumber: "INV-000005", currency: "PKR" } });
+      await db.salesInvoice.create({ data: { ...invoiceData, invoiceNumber: "INV-OLDER-USD", currency: "USD" } });
+      await db.expense.create({ data: { organizationId: org.id, createdById: user.id, expenseNumber: "EXP-DRAFT", expenseDate: date, description: "Pending expense", total: 25, currency: "PKR" } });
+      const summary = await DashboardService.getSummary({ ...user, activeOrganizationId: org.id });
+      expect(summary.invoices).toEqual(expect.arrayContaining([
+        expect.objectContaining({ invoiceNumber: "INV-000005", status: "DRAFT", currency: "PKR" }),
+        expect.objectContaining({ invoiceNumber: "INV-OLDER-USD", status: "DRAFT", currency: "USD" }),
+      ]));
+      expect(summary.invoices).toHaveLength(2);
+      expect(summary.expenses).toEqual([expect.objectContaining({ expenseNumber: "EXP-DRAFT", status: "DRAFT" })]);
+      expect(summary.totalRevenue).toBe(0);
+      expect(summary.totalExpenses).toBe(0);
+      expect(summary.receivables).toBe(0);
+    } finally {
+      await db.organization.delete({ where: { id: org.id } });
+    }
+  });
+
   it("imports the same bank statement concurrently without double-counting balances", async () => {
     const account = await db.bankAccount.create({ data: { organizationId: user.activeOrganizationId!, accountName: "Import regression", openingBalance: 1000, currentBalance: 1000 } });
     const input = { bankAccountId: account.id, fileName: "statement.csv", csvContent: "Date,Description,Amount\n2026-10-01,Deposit,250\n2026-10-02,Withdrawal,-50", mapping: { hasHeader: true, dateColumn: "Date", descriptionColumn: "Description", amountColumn: "Amount" } };

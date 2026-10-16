@@ -23,6 +23,7 @@ export interface ActivityItem {
   party: string;
   date: string;
   amount: number;
+  currency?: string;
   status: string;
   href: string;
 }
@@ -75,10 +76,10 @@ export function RecentActivityList({ activities, currency = "USD" }: RecentActiv
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-4">
         <div>
           <h3 className="text-base font-bold text-white text-depth">
-            Recent Financial Operations
+            Recent Activity
           </h3>
           <p className="text-xs text-slate-400">
-            Recent issued invoices and posted expenses.
+            Saved invoices and expenses, including drafts. Drafts do not affect financial totals.
           </p>
         </div>
 
@@ -110,7 +111,7 @@ export function RecentActivityList({ activities, currency = "USD" }: RecentActiv
             </div>
             <h4 className="text-sm font-semibold text-slate-200">No recent operations</h4>
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              Issued invoices and posted expenses will appear here.
+              Saved invoices and expenses will appear here, including drafts.
             </p>
 
           </div>
@@ -155,7 +156,7 @@ export function RecentActivityList({ activities, currency = "USD" }: RecentActiv
                         isInflow ? "text-emerald-400" : "text-rose-400"
                       )}
                     >
-                      {isInflow ? "+" : "-"}{currency} {Math.abs(item.amount).toFixed(2)}
+                      {isInflow ? "+" : "-"}{item.currency || currency} {Math.abs(item.amount).toFixed(2)}
                     </p>
                     <span className="text-[10px] text-slate-400 font-mono">
                       {item.status}

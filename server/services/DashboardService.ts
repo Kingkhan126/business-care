@@ -49,14 +49,14 @@ export class DashboardService {
         orderBy: { accountName: "asc" }, take: 20,
       }) : [],
       access.invoices ? db.salesInvoice.findMany({
-        where: { organizationId, currency, status: { in: ["ISSUED", "PARTIALLY_PAID", "PAID"] } },
-        select: { id: true, invoiceNumber: true, total: true, status: true, issueDate: true, customer: { select: { displayName: true } } },
-        orderBy: { issueDate: "desc" }, take: 5,
+        where: { organizationId },
+        select: { id: true, invoiceNumber: true, total: true, currency: true, status: true, issueDate: true, createdAt: true, customer: { select: { displayName: true } } },
+        orderBy: { createdAt: "desc" }, take: 5,
       }) : [],
       access.expenses ? db.expense.findMany({
-        where: { organizationId, currency, status: { in: ["POSTED", "PAID"] } },
-        select: { id: true, expenseNumber: true, total: true, status: true, expenseDate: true, category: { select: { name: true } } },
-        orderBy: { expenseDate: "desc" }, take: 5,
+        where: { organizationId },
+        select: { id: true, expenseNumber: true, total: true, currency: true, status: true, expenseDate: true, createdAt: true, category: { select: { name: true } } },
+        orderBy: { createdAt: "desc" }, take: 5,
       }) : [],
       access.reports ? db.$queryRaw<Array<{ month: Date; revenue: Prisma.Decimal; expenses: Prisma.Decimal }>>(Prisma.sql`
         SELECT date_trunc('month', j."entryDate") AS month,
