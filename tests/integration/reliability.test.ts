@@ -45,8 +45,14 @@ describe("PostgreSQL reliability regressions", () => {
       expect(saved.logoUrl).toBe(`data:image/png;base64,${buffer.toString("base64")}`);
       expect((await DashboardService.getSummary(user)).organization.logoUrl).toBe(saved.logoUrl);
       expect((await db.organization.findUniqueOrThrow({ where: { id: otherOrg } })).logoUrl).toBeNull();
+      const ownInvoice = await db.salesInvoice.create({ data: { organizationId: user.activeOrganizationId!, customerId, createdById: user.id, invoiceNumber: "BRANDING-CHECK", issueDate: date, dueDate: date } });
+      const foreignInvoice = await db.salesInvoice.create({ data: { organizationId: otherOrg, customerId: otherCustomerId, createdById: user.id, invoiceNumber: "BRANDING-CHECK", issueDate: date, dueDate: date } });
+      expect((await InvoiceService.getById(user, ownInvoice.id)).organization.logoUrl).toBe(saved.logoUrl);
+      expect((await InvoiceService.getById({ ...user, activeOrganizationId: otherOrg }, foreignInvoice.id)).organization.logoUrl).toBeNull();
+      await expect(InvoiceService.getById(user, foreignInvoice.id)).rejects.toThrow(/not found/i);
       await OrganizationService.removeLogo(owner);
       expect((await db.organization.findUniqueOrThrow({ where: { id: user.activeOrganizationId! } })).logoUrl).toBeNull();
+      expect((await InvoiceService.getById(user, ownInvoice.id)).organization.logoUrl).toBeNull();
     } finally {
       vi.unstubAllEnvs();
     }

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Printer, Share2, Copy, Check, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { InvoiceDocument, InvoiceDocumentData } from "./InvoiceDocument";
+import { printInvoice } from "@/lib/printing/print-invoice";
 
 interface InvoicePrintModalProps {
   invoice: InvoiceDocumentData | null;
@@ -16,9 +17,7 @@ export function InvoicePrintModal({ invoice, isOpen, onClose }: InvoicePrintModa
 
   if (!isOpen || !invoice) return null;
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => printInvoice();
 
   const handleCopySummary = async () => {
     try {

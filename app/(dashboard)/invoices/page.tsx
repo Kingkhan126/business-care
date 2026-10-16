@@ -205,13 +205,13 @@ export default function InvoicesPage() {
   };
 
   const handleOpenPrint = async (inv: SalesInvoice) => {
-    setPrintInvoice(inv as any);
-    setIsPrintModalOpen(true);
     try {
       const res = await fetch(`/api/invoices/${inv.id}`);
       if (res.ok) {
         const fullData = await res.json();
         setPrintInvoice(fullData);
+        // Open only after tenant branding and full invoice data are available.
+        setIsPrintModalOpen(true);
       }
     } catch (e) {
       console.error("Failed to fetch full invoice lines", e);

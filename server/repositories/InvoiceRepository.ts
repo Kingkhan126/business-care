@@ -6,6 +6,7 @@ export class InvoiceRepository {
     return db.salesInvoice.findFirst({
       where: { id, organizationId },
       include: {
+        organization: { select: { name: true, logoUrl: true } },
         customer: true,
         sourceSalesOrder: true,
         warehouse: true,

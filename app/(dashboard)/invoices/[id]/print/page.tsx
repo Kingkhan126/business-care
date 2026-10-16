@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Printer, ArrowLeft, Loader2 } from "lucide-react";
 import { InvoiceDocument, InvoiceDocumentData } from "@/components/invoices/InvoiceDocument";
+import { printInvoice } from "@/lib/printing/print-invoice";
 
 export default function InvoicePrintPage() {
   const params = useParams();
@@ -33,9 +34,7 @@ export default function InvoicePrintPage() {
     loadInvoice();
   }, [params?.id]);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => printInvoice();
 
   if (loading) {
     return (

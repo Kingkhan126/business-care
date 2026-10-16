@@ -1,6 +1,7 @@
 import { validateTransactionReferences } from "./TransactionReferenceService";
 import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
+import { storageService } from "@/lib/storage";
 import { InvoiceRepository } from "../repositories/InvoiceRepository";
 import { CustomerRepository } from "../repositories/CustomerRepository";
 import { WarehouseRepository } from "../repositories/WarehouseRepository";
@@ -38,6 +39,16 @@ export class InvoiceService {
     const invoice = await InvoiceRepository.findByIdAndOrg(id, user.activeOrganizationId);
     if (!invoice) {
       throw new NotFoundError("Sales Invoice not found");
+    }
+    const storedLogo = invoice.organization?.logoUrl;
+    if (storedLogo?.startsWith("organizations/")) {
+      let logoUrl: string | null = null;
+      try {
+        logoUrl = await storageService.getSignedDownloadUrl?.(user.activeOrganizationId, storedLogo) || null;
+      } catch {
+        // Missing branding storage must never prevent access to an otherwise valid invoice.
+      }
+      return { ...invoice, organization: { ...invoice.organization, logoUrl } };
     }
     return invoice;
   }

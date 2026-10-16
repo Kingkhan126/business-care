@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { InvoiceLogo } from "./InvoiceLogo";
 import {
   MapPin,
   Phone,
@@ -25,6 +26,7 @@ export interface InvoiceDocumentData {
   paymentMethod?: string | null;
   paymentReference?: string | null;
   cashierName?: string | null;
+  organization?: { name: string; logoUrl?: string | null } | null;
   customer?: {
     displayName: string;
     legalName?: string | null;
@@ -135,10 +137,9 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
       style={{ minHeight: "1050px" }}
     >
       {/* ── 1. Top Header ── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(140px,0.9fr)] sm:grid-cols-[auto_minmax(0,1fr)_224px] print:grid-cols-[auto_minmax(0,1fr)_224px] items-start gap-4 pb-4">
         {/* Left: Brand Logo & Text */}
         <div className="flex items-center gap-3">
-          <AdcarePharmacyLogo className="h-14 w-14" />
           <div className="flex flex-col">
             <div className="flex items-baseline text-2xl font-black tracking-tight leading-none">
               <span className="text-[#1d4ed8]">AD </span>
@@ -151,7 +152,7 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
         </div>
 
         {/* Center: Store Information */}
-        <div className="border-l border-slate-200 pl-4 space-y-1 text-xs text-slate-700">
+        <div className="col-start-1 row-start-2 sm:col-start-2 sm:row-start-1 print:col-start-2 print:row-start-1 border-l border-slate-200 pl-4 space-y-1 text-xs text-slate-700">
           <h2 className="font-bold text-[#1d4ed8] text-sm leading-tight">
             Adcare Meds & Pharmacy
           </h2>
@@ -170,7 +171,9 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
         </div>
 
         {/* Right: TAX INVOICE Box */}
-        <div className="w-full sm:w-56 border border-[#1d4ed8] rounded-xl p-3 bg-white shadow-xs">
+        <div className="col-start-2 row-start-1 row-span-2 sm:col-start-3 sm:row-span-1 print:col-start-3 print:row-span-1 flex min-w-0 flex-col items-end">
+          <InvoiceLogo logoUrl={invoice.organization?.logoUrl} name={invoice.organization?.name || "Business"} />
+        <div className="w-full border border-[#1d4ed8] rounded-xl p-3 bg-white shadow-xs">
           <h3 className="text-center font-black text-lg text-[#1e3a8a] tracking-wider mb-2 border-b border-blue-100 pb-1">
             TAX INVOICE
           </h3>
@@ -192,6 +195,7 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
               <span className="font-semibold text-slate-900">{cashier}</span>
             </div>
           </div>
+        </div>
         </div>
       </div>
 
@@ -430,7 +434,6 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDocumentData }) {
 
         {/* Right: Brand Signature Logo */}
         <div className="flex items-center gap-2 shrink-0">
-          <AdcarePharmacyLogo className="h-10 w-10" />
           <div className="flex flex-col">
             <div className="flex items-baseline text-lg font-black tracking-tight leading-none">
               <span className="text-[#1d4ed8]">AD </span>

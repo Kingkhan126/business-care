@@ -205,6 +205,10 @@ body {
 
 /* ─── Clean Print Stylesheet for Invoices & Reports ─── */
 @media print {
+  :root {
+    color-scheme: light;
+  }
+
   @page {
     margin: 8mm 10mm;
     size: A4 portrait;
