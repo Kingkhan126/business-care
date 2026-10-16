@@ -7,7 +7,7 @@ describe("Existing database migration adoption", () => {
   const url = new URL(process.env.TEST_DATABASE_URL!);
   if (!url.pathname.endsWith("_test")) throw new Error("A dedicated test database is required");
   const suffix = randomUUID().replaceAll("-", "");
-  const schemas = [`migration_baseline_${suffix}`, `migration_drift_${suffix}`];
+  const schemas = [`migration_baseline_${suffix}`, `migration_drift_${suffix}`, `migration_keys_${suffix}`, `migration_orphans_${suffix}`];
   const admin = new PrismaClient({ datasources: { db: { url: url.toString() } } });
   const clients = schemas.map(schema => {
     const scopedUrl = new URL(url);
@@ -30,7 +30,7 @@ describe("Existing database migration adoption", () => {
     for (const { client } of clients) await client.$disconnect();
     for (const schema of schemas) {
       // Only this test's generated namespaces inside the dedicated test database.
-      if (!/^migration_(baseline|drift)_[a-f0-9]{32}$/.test(schema)) throw new Error("Unexpected schema cleanup target");
+      if (!/^migration_(baseline|drift|keys|orphans)_[a-f0-9]{32}$/.test(schema)) throw new Error("Unexpected schema cleanup target");
       await admin.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
     }
     await admin.$disconnect();
@@ -61,5 +61,45 @@ describe("Existing database migration adoption", () => {
     expect(await client.user.count()).toBe(1);
     const migrations = await client.$queryRaw<Array<{ exists: boolean }>>`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = '_prisma_migrations') AS exists`;
     expect(migrations[0].exists).toBe(false);
+  });
+
+  const dropForeignKeys = async (index: number) => {
+    const { client } = clients[index];
+    const constraints = await client.$queryRaw<Array<{ table_name: string; constraint_name: string }>>`
+      SELECT c.relname AS table_name, con.conname AS constraint_name
+      FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE con.contype = 'f' AND n.nspname = current_schema()`;
+    for (const constraint of constraints) {
+      if (!/^\w+$/.test(constraint.table_name) || !/^\w+$/.test(constraint.constraint_name)) throw new Error("Unexpected test constraint");
+      await admin.$executeRawUnsafe(`ALTER TABLE "${schemas[index]}"."${constraint.table_name}" DROP CONSTRAINT "${constraint.constraint_name}"`);
+    }
+    return constraints.length;
+  };
+
+  it("restores missing foreign keys before baselining while preserving existing records", async () => {
+    const { env, client } = clients[2];
+    const count = await dropForeignKeys(2);
+    expect(count).toBeGreaterThan(0);
+    const result = run(["scripts/vercel-build.mjs", "--migrate-only"], env);
+    expect(result.status, result.stdout + result.stderr).toBe(0);
+    expect(result.stdout).toContain(`restoring ${count} missing baseline foreign keys`);
+    expect(await client.user.count()).toBe(1);
+    expect(await client.documentSequence.count()).toBe(0);
+    const constraints = await client.$queryRaw<Array<{ count: bigint }>>`SELECT count(*) FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE con.contype = 'f' AND n.nspname = current_schema()`;
+    expect(Number(constraints[0].count)).toBeGreaterThanOrEqual(count);
+  });
+
+  it("rolls back all restored constraints when an existing record has an orphaned reference", async () => {
+    const { env, client } = clients[3];
+    await dropForeignKeys(3);
+    await client.customer.create({ data: { organizationId: "missing-organization", customerNumber: "C-1", displayName: "Preserve orphan for review" } });
+    const result = run(["scripts/vercel-build.mjs", "--migrate-only"], env);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("Foreign-key repair failed and was rolled back");
+    expect(await client.customer.count()).toBe(1);
+    expect(await client.user.count()).toBe(1);
+    const constraints = await client.$queryRaw<Array<{ count: bigint }>>`SELECT count(*) FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE con.contype = 'f' AND n.nspname = current_schema()`;
+    expect(Number(constraints[0].count)).toBe(0);
   });
 });

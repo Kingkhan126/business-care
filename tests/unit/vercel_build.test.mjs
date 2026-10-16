@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
-import { runVercelBuild } from "../../scripts/vercel-build.mjs";
+import { missingForeignKeyStatements, runVercelBuild } from "../../scripts/vercel-build.mjs";
 
 vi.mock("node:child_process", () => ({ spawnSync: vi.fn() }));
 beforeEach(() => { vi.resetAllMocks(); spawnSync.mockReturnValue({ status: 0 }); });
@@ -40,9 +40,18 @@ describe("Vercel release migration gate", () => {
     spawnSync.mockReturnValueOnce({ status: 0 })
       .mockReturnValueOnce({ status: 1, stderr: "Error: P3005" })
       .mockReturnValueOnce({ status: 2 })
-      .mockReturnValueOnce({ status: 1, stderr: "Error: P3005" });
+      .mockReturnValueOnce({ status: 1, stderr: "Error: P3005" })
+      .mockReturnValueOnce({ status: 2, stdout: 'ALTER TABLE "Customer" DROP COLUMN "legalName";' });
     expect(runVercelBuild({ DATABASE_URL: "test-url" })).toBe(1);
     expect(spawnSync.mock.calls.some(([, args]) => args.includes("resolve") || args.includes("node_modules/next/dist/bin/next"))).toBe(false);
+  });
+
+  it("allows only exact baseline foreign-key additions and rejects destructive or mixed SQL", () => {
+    const foreignKey = 'ALTER TABLE "Customer" ADD CONSTRAINT "Customer_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;';
+    expect(missingForeignKeyStatements(`-- AddForeignKey\n${foreignKey}`)).toEqual([foreignKey.slice(0, -1)]);
+    expect(missingForeignKeyStatements(`${foreignKey}\nDELETE FROM "Customer";`)).toBeNull();
+    expect(missingForeignKeyStatements(foreignKey.replace("ON DELETE CASCADE", "ON DELETE RESTRICT"))).toBeNull();
+    expect(missingForeignKeyStatements("")).toBeNull();
   });
 
   it("continues when another deployment has already recorded the verified baseline", () => {

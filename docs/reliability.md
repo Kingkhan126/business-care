@@ -18,6 +18,8 @@ Migration `202610160001_reliable_document_numbers` adds a counter table without 
 
 The baseline migration's leading UTF-8 BOM was removed because PostgreSQL rejected fresh installations. Its SQL operations are otherwise unchanged. Existing installations keep their applied migration records; do not reset their database or mark the baseline unapplied. Test the deployment against a backup or staging database as part of release operations.
 
+An untracked existing database must match the frozen initial schema before the build records its baseline. If its only differences are missing foreign keys, the release script accepts only exact constraint additions from the initial migration and restores them in one transaction, validating existing records. A transaction-level advisory lock coordinates simultaneous builds. Orphaned references, lock errors, column changes, and other differences stop the release; no records are deleted or rewritten. The script rechecks the schema before recording the baseline and deploying later migrations.
+
 ## Verification
 
 Run `npm run check` and `npm run test:integration` with a dedicated TEST_DATABASE_URL ending in `_test`. Integration tests use real PostgreSQL and verify tenant isolation, concurrent numbering and payments, journal reversal history, inactive account history, concurrent expense approval, safe claimant data, audit-failure rollback, atomic registration rollback, bank import deduplication, and reconciliation locking. CI repeats the checks with PostgreSQL 16.
