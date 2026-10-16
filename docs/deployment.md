@@ -184,3 +184,14 @@ CMD ["npm", "run", "start"]
 - **Rollback Procedure:**
   - Code rollback: Re-deploy previous Git commit tag in Vercel or roll back container image tag.
   - Schema rollback: Prisma migrations are designed additively; if needed, apply compensating migration scripts.
+
+
+## Existing databases without migration history (P3005)
+
+An existing database may have been provisioned with `prisma db push` and contain all business tables without a `_prisma_migrations` history. `prisma migrate deploy` rejects that state with P3005.
+
+The deployment runner now handles this specific case by comparing the live schema to the frozen initial schema at `prisma/migrations/0_init/schema.prisma`. The snapshot was checked against `0_init/migration.sql`; it represents the original database, before DocumentSequence was added. Only an exact Prisma schema match allows the runner to record `0_init` as already applied and then deploy pending migrations. The comparison SQL is never executed. No reset or business-table recreation is performed. Any schema difference stops automatic adoption for review. Deployments sharing a database tolerate another build recording the same baseline first.
+
+The baseline snapshot must remain immutable when later migrations are added. This follows [Prisma's existing-database baselining workflow](https://www.prisma.io/docs/orm/prisma-migrate/workflows/baselining). The runner uses the repository's pinned Prisma 5 CLI flags.
+
+To run only the migration/recovery step in a configured environment, use `node scripts/vercel-build.mjs --migrate-only`. The same DATABASE_URL/DIRECT_URL rules apply. Never use `prisma migrate reset` or `db push --accept-data-loss` to resolve this production error.

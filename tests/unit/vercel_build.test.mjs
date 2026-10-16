@@ -21,4 +21,27 @@ describe("Vercel release migration gate", () => {
     expect(spawnSync.mock.calls[2][2].env.DATABASE_URL).toBe("pooled-url");
     expect(env.DATABASE_URL).toBe("pooled-url");
   });
+
+  it("records the baseline only after an untracked database matches the initial schema", () => {
+    spawnSync.mockReturnValueOnce({ status: 0 })
+      .mockReturnValueOnce({ status: 1, stderr: "Error: P3005" })
+      .mockReturnValueOnce({ status: 0 })
+      .mockReturnValueOnce({ status: 0 })
+      .mockReturnValueOnce({ status: 0 });
+    expect(runVercelBuild({ DATABASE_URL: "test-url" })).toBe(0);
+    const calls = spawnSync.mock.calls.map(([, args]) => args.slice(1));
+    expect(calls[2]).toContain("--exit-code");
+    expect(calls[3]).toEqual(["migrate", "resolve", "--applied", "0_init"]);
+    expect(calls[4]).toEqual(["migrate", "deploy"]);
+    expect(calls[5]).toEqual(["build"]);
+  });
+
+  it("does not baseline or build when an untracked database differs from the initial schema", () => {
+    spawnSync.mockReturnValueOnce({ status: 0 })
+      .mockReturnValueOnce({ status: 1, stderr: "Error: P3005" })
+      .mockReturnValueOnce({ status: 2 })
+      .mockReturnValueOnce({ status: 1, stderr: "Error: P3005" });
+    expect(runVercelBuild({ DATABASE_URL: "test-url" })).toBe(1);
+    expect(spawnSync.mock.calls.some(([, args]) => args.includes("resolve") || args.includes("node_modules/next/dist/bin/next"))).toBe(false);
+  });
 });
