@@ -4,7 +4,8 @@ import { OrganizationSettingsRepository } from "../repositories/OrganizationSett
 import { MembershipRepository } from "../repositories/MembershipRepository";
 import { RoleRepository } from "../repositories/RoleRepository";
 import { AuditRepository } from "../repositories/AuditRepository";
-import { storageService, StorageFile } from "@/lib/storage";
+import { StorageFile } from "@/lib/storage";
+import { uploadOrganizationLogo, deleteOrganizationLogo } from "@/lib/storage/organization-logo";
 import { SessionUser } from "@/types/auth";
 import { assertTenantAccess } from "../authorization/tenant";
 import { requirePermission } from "../authorization/permissions";
@@ -133,7 +134,7 @@ export class OrganizationService {
     assertTenantAccess(user, user.activeOrganizationId);
     requirePermission(user, "organization.update");
 
-    const logoUrl = await storageService.uploadLogo(user.activeOrganizationId, file);
+    const logoUrl = await uploadOrganizationLogo(user.activeOrganizationId, file);
 
     const updatedOrg = await db.organization.update({
       where: { id: user.activeOrganizationId },
@@ -160,7 +161,7 @@ export class OrganizationService {
     assertTenantAccess(user, user.activeOrganizationId);
     requirePermission(user, "organization.update");
 
-    await storageService.deleteLogo(user.activeOrganizationId);
+    await deleteOrganizationLogo(user.activeOrganizationId);
 
     const updatedOrg = await db.organization.update({
       where: { id: user.activeOrganizationId },

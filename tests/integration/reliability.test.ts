@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import { db } from "@/db/client";
 import { SessionUser } from "@/types/auth";
@@ -17,6 +17,7 @@ import { OrganizationSettingsRepository } from "@/server/repositories/Organizati
 import { AccountingPeriodService } from "@/server/services/AccountingPeriodService";
 import { CustomerService } from "@/server/services/CustomerService";
 import { CustomerSchema } from "@/lib/validation/master_data";
+import { OrganizationService } from "@/server/services/OrganizationService";
 
 describe("PostgreSQL reliability regressions", () => {
   const run = randomUUID();
@@ -31,6 +32,23 @@ describe("PostgreSQL reliability regressions", () => {
   let expenseId: string;
   let claimantId: string;
   const date = new Date();
+
+  it("persists and removes an organization logo on Vercel without configured object storage", async () => {
+    vi.stubEnv("VERCEL", "1");
+    for (const key of ["S3_BUCKET", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"]) vi.stubEnv(key, "");
+    try {
+      const owner = { ...user, permissions: [...user.permissions, "organization.update"] };
+      const buffer = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1cAAAAASUVORK5CYII=", "base64");
+      await OrganizationService.uploadLogo(owner, { buffer, filename: "logo.png", mimeType: "image/png", sizeBytes: buffer.length });
+      const saved = await db.organization.findUniqueOrThrow({ where: { id: user.activeOrganizationId! } });
+      expect(saved.logoUrl).toBe(`data:image/png;base64,${buffer.toString("base64")}`);
+      expect((await db.organization.findUniqueOrThrow({ where: { id: otherOrg } })).logoUrl).toBeNull();
+      await OrganizationService.removeLogo(owner);
+      expect((await db.organization.findUniqueOrThrow({ where: { id: user.activeOrganizationId! } })).logoUrl).toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
 
   beforeAll(async () => {
     const actor = await db.user.create({ data: { email: `${run}@test.invalid`, name: "Test Owner", passwordHash: "never-return-this-hash" } });
