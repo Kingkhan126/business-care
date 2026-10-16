@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { ExpenseRepository } from "../repositories/ExpenseRepository";
 import { AccountMappingService } from "./AccountMappingService";
@@ -125,9 +126,7 @@ export class ExpensePaymentService {
 
     return db.$transaction(async (tx) => {
       // 1. Concurrency row lock
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "Expense" WHERE id = ${expenseId} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "Expense" WHERE id = ${expenseId} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       const expense = await ExpenseRepository.findByIdAndOrg(expenseId, orgId, tx);
       if (!expense) {
@@ -193,8 +192,7 @@ export class ExpensePaymentService {
       let attempts = 0;
       let journalNumber = "";
       while (attempts < 5) {
-        const count = await tx.journalEntry.count({ where: { organizationId: orgId } });
-        journalNumber = `JE-${String(count + 1 + attempts).padStart(6, "0")}`;
+        journalNumber = await nextDocumentNumber(tx, orgId, "journalEntry", "JE-", 6);
         const existing = await tx.journalEntry.findFirst({
           where: { journalNumber, organizationId: orgId },
         });
@@ -356,9 +354,7 @@ export class ExpensePaymentService {
 
     return db.$transaction(async (tx) => {
       // 1. Concurrency row lock
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "Expense" WHERE id = ${expenseId} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "Expense" WHERE id = ${expenseId} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       const expense = await ExpenseRepository.findByIdAndOrg(expenseId, orgId, tx);
       if (!expense) {
@@ -423,8 +419,7 @@ export class ExpensePaymentService {
         let attempts = 0;
         let journalNumber = "";
         while (attempts < 5) {
-          const count = await tx.journalEntry.count({ where: { organizationId: orgId } });
-          journalNumber = `JE-REV-${String(count + 1 + attempts).padStart(5, "0")}`;
+          journalNumber = await nextDocumentNumber(tx, orgId, "journalEntry", "JE-REV-", 5);
           const existing = await tx.journalEntry.findFirst({
             where: { journalNumber, organizationId: orgId },
           });

@@ -1,3 +1,5 @@
+import { validateTransactionReferences } from "./TransactionReferenceService";
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { CreditNoteRepository } from "../repositories/CreditNoteRepository";
 import { CustomerRepository } from "../repositories/CustomerRepository";
@@ -58,8 +60,8 @@ export class CreditNoteService {
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
-          const count = await tx.creditNote.count({ where: { organizationId: user.activeOrganizationId! } });
-          const creditNoteNumber = `CN-${String(count + 1 + attempts).padStart(6, "0")}`;
+          await validateTransactionReferences(tx, user.activeOrganizationId!, input);
+          const creditNoteNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "creditNote", "CN-", 6);
 
           const existing = await tx.creditNote.findFirst({
             where: { creditNoteNumber, organizationId: user.activeOrganizationId! },

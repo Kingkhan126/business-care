@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser, createSessionToken, setSessionCookie } from "@/lib/auth/session";
 import { OrganizationService } from "@/server/services/OrganizationService";
@@ -33,16 +34,7 @@ export async function POST(request: Request) {
       activeOrganizationId: organization.id,
       organizationName: organization.name,
     });
-  } catch (err: unknown) {
-    if (err instanceof AppError) {
-      return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: err.statusCode }
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: "Failed to switch organization" },
-      { status: 400 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

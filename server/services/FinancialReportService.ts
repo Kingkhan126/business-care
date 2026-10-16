@@ -33,9 +33,9 @@ export class FinancialReportService {
           accountId: acc.id,
           journalEntry: {
             organizationId: user.activeOrganizationId,
-            status: "POSTED",
-            ...(options?.startDate && options?.endDate && {
-              entryDate: { gte: options.startDate, lte: options.endDate },
+            status: { in: ["POSTED", "REVERSED"] },
+            ...((options?.startDate || options?.endDate) && {
+              entryDate: { ...(options?.startDate && { gte: options.startDate }), ...(options?.endDate && { lte: options.endDate }) },
             }),
           },
         },
@@ -99,7 +99,7 @@ export class FinancialReportService {
     const asOfDate = options?.asOfDate || new Date();
 
     const accounts = await db.account.findMany({
-      where: { organizationId: user.activeOrganizationId, isActive: true },
+      where: { organizationId: user.activeOrganizationId },
       orderBy: { accountCode: "asc" },
     });
 
@@ -114,7 +114,7 @@ export class FinancialReportService {
           accountId: acc.id,
           journalEntry: {
             organizationId: user.activeOrganizationId,
-            status: "POSTED",
+            status: { in: ["POSTED", "REVERSED"] },
             entryDate: { lte: asOfDate },
             ...(options?.periodId && { accountingPeriodId: options.periodId }),
           },
@@ -185,7 +185,6 @@ export class FinancialReportService {
       where: {
         organizationId: user.activeOrganizationId,
         accountType: { in: ["REVENUE", "EXPENSE"] },
-        isActive: true,
       },
       orderBy: { accountCode: "asc" },
     });
@@ -204,7 +203,7 @@ export class FinancialReportService {
           accountId: acc.id,
           journalEntry: {
             organizationId: user.activeOrganizationId,
-            status: "POSTED",
+            status: { in: ["POSTED", "REVERSED"] },
             entryDate: { gte: startDate, lte: endDate },
           },
         },
@@ -268,7 +267,6 @@ export class FinancialReportService {
       where: {
         organizationId: user.activeOrganizationId,
         accountType: { in: ["ASSET", "LIABILITY", "EQUITY"] },
-        isActive: true,
       },
       orderBy: { accountCode: "asc" },
     });
@@ -287,7 +285,7 @@ export class FinancialReportService {
           accountId: acc.id,
           journalEntry: {
             organizationId: user.activeOrganizationId,
-            status: "POSTED",
+            status: { in: ["POSTED", "REVERSED"] },
             entryDate: { lte: asOfDate },
           },
         },
@@ -324,7 +322,7 @@ export class FinancialReportService {
     const priorRevAgg = await db.journalEntryLine.aggregate({
       where: {
         account: { organizationId: user.activeOrganizationId, accountType: "REVENUE" },
-        journalEntry: { organizationId: user.activeOrganizationId, status: "POSTED", entryDate: { lt: currentFiscalYearStart } },
+        journalEntry: { organizationId: user.activeOrganizationId, status: { in: ["POSTED", "REVERSED"] }, entryDate: { lt: currentFiscalYearStart } },
       },
       _sum: { debit: true, credit: true },
     });
@@ -332,7 +330,7 @@ export class FinancialReportService {
     const priorExpAgg = await db.journalEntryLine.aggregate({
       where: {
         account: { organizationId: user.activeOrganizationId, accountType: "EXPENSE" },
-        journalEntry: { organizationId: user.activeOrganizationId, status: "POSTED", entryDate: { lt: currentFiscalYearStart } },
+        journalEntry: { organizationId: user.activeOrganizationId, status: { in: ["POSTED", "REVERSED"] }, entryDate: { lt: currentFiscalYearStart } },
       },
       _sum: { debit: true, credit: true },
     });

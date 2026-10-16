@@ -23,6 +23,7 @@ export function FinancialOverviewChart({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Compute scale boundaries
+  const minValue = Math.floor(Math.min(...data.flatMap(d => [d.revenue, d.expenses]), 0) * 1.2 / 500) * 500;
   const maxRevenue = Math.max(...data.map((d) => d.revenue), 0);
   const maxExpenses = Math.max(...data.map((d) => d.expenses), 0);
   const rawMax = Math.max(maxRevenue, maxExpenses);
@@ -44,8 +45,7 @@ export function FinancialOverviewChart({
 
   // Helper to map value to Y coord
   const getY = (value: number) => {
-    const clamped = Math.max(0, Math.min(value, maxValue));
-    return height - paddingY - (clamped / maxValue) * usableHeight;
+    return height - paddingY - ((value - minValue) / (maxValue - minValue)) * usableHeight;
   };
 
   // Build SVG path strings with smooth curves
@@ -69,10 +69,10 @@ export function FinancialOverviewChart({
   const expensesLine = buildSmoothPath(data.map((d) => d.expenses));
 
   const revenueArea = revenueLine
-    ? `${revenueLine} L ${getX(data.length - 1)} ${height - paddingY} L ${getX(0)} ${height - paddingY} Z`
+    ? `${revenueLine} L ${getX(data.length - 1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z`
     : "";
   const expensesArea = expensesLine
-    ? `${expensesLine} L ${getX(data.length - 1)} ${height - paddingY} L ${getX(0)} ${height - paddingY} Z`
+    ? `${expensesLine} L ${getX(data.length - 1)} ${getY(0)} L ${getX(0)} ${getY(0)} Z`
     : "";
 
   const totalRevenue = data.reduce((s, d) => s + d.revenue, 0);
@@ -82,7 +82,7 @@ export function FinancialOverviewChart({
   // Grid lines
   const gridSteps = 4;
   const gridLines = Array.from({ length: gridSteps + 1 }, (_, i) => {
-    const val = (maxValue / gridSteps) * (gridSteps - i);
+    const val = maxValue - ((maxValue - minValue) / gridSteps) * i;
     const y = getY(val);
     return { val, y };
   });
@@ -106,7 +106,7 @@ export function FinancialOverviewChart({
             </span>
           </div>
           <p className="mt-0.5 text-xs text-slate-400">
-            Real monthly Revenue vs Operating Expenses aggregated from general ledger &amp; invoices.
+            Monthly revenue and expenses from posted ledger entries (UTC).
           </p>
         </div>
 
@@ -126,21 +126,21 @@ export function FinancialOverviewChart({
       {/* Financial KPIs Banner inside chart */}
       <div className="grid grid-cols-3 gap-3 my-4 rounded-xl glass-surface p-3 border border-white/5 text-center">
         <div>
-          <span className="text-[10px] uppercase font-semibold text-slate-400">6-Mo Invoiced</span>
+          <span className="text-[10px] uppercase font-semibold text-slate-400">6-Mo Revenue</span>
           <p className="text-sm sm:text-base font-bold text-emerald-400 font-mono mt-0.5">
-            PKR {totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {currency} {totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
         <div className="border-x border-white/5">
           <span className="text-[10px] uppercase font-semibold text-slate-400">6-Mo Expenses</span>
           <p className="text-sm sm:text-base font-bold text-rose-400 font-mono mt-0.5">
-            PKR {totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {currency} {totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
         <div>
-          <span className="text-[10px] uppercase font-semibold text-slate-400">Net Margin</span>
+          <span className="text-[10px] uppercase font-semibold text-slate-400">Net Profit</span>
           <p className="text-sm sm:text-base font-bold text-indigo-300 font-mono mt-0.5">
-            PKR {netProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {currency} {netProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
       </div>
@@ -148,6 +148,8 @@ export function FinancialOverviewChart({
       {/* SVG Dimensional Chart Container */}
       <div className="relative mt-2 w-full select-none" onMouseLeave={() => setHoveredIndex(null)}>
         <svg
+          role="img"
+          aria-label={`Monthly revenue and expenses in ${currency}`}
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-auto overflow-visible"
         >
@@ -313,7 +315,7 @@ export function FinancialOverviewChart({
                   Revenue:
                 </span>
                 <span className="font-semibold text-white">
-                  PKR {activePoint.revenue.toFixed(2)}
+                  {currency} {activePoint.revenue.toFixed(2)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4">
@@ -322,7 +324,7 @@ export function FinancialOverviewChart({
                   Expenses:
                 </span>
                 <span className="font-semibold text-white">
-                  PKR {activePoint.expenses.toFixed(2)}
+                  {currency} {activePoint.expenses.toFixed(2)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4 pt-1 border-t border-white/5">
@@ -334,7 +336,7 @@ export function FinancialOverviewChart({
                       : "text-rose-300"
                   }`}
                 >
-                  PKR {(activePoint.revenue - activePoint.expenses).toFixed(2)}
+                  {currency} {(activePoint.revenue - activePoint.expenses).toFixed(2)}
                 </span>
               </div>
             </div>

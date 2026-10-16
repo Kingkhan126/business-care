@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { BankTransferRepository } from "../repositories/BankTransferRepository";
 import { BankAccountRepository } from "../repositories/BankAccountRepository";
@@ -130,9 +131,7 @@ export class BankTransferService {
       }
 
       // 1. Generate unique transfer number
-      const transferNumber = await BankTransferRepository.findNextTransferNumber(
-        user.activeOrganizationId!
-      );
+      const transferNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "bankTransfer", `TRF-${transferDate.getUTCFullYear()}-`, 5);
 
       // 2. Adjust operational balances
       await tx.bankAccount.update({
@@ -250,10 +249,7 @@ export class BankTransferService {
           }
         }
 
-        const count = await tx.journalEntry.count({
-          where: { organizationId: user.activeOrganizationId! },
-        });
-        const journalNumber = `JE-TRF-${String(count + 1).padStart(5, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-TRF-", 5);
 
         const journalLines: Prisma.JournalEntryLineUncheckedCreateWithoutJournalEntryInput[] = [
           {

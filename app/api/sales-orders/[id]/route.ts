@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { SalesOrderService } from "@/server/services/SalesOrderService";
@@ -11,9 +12,6 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const order = await SalesOrderService.getById(user, params.id);
     return NextResponse.json(order);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

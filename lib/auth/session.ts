@@ -1,3 +1,5 @@
+import { getSecretKey } from "./secret";
+export { getSecretKey } from "./secret";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
@@ -5,21 +7,6 @@ import { JWTPayload, SessionUser } from "@/types/auth";
 import { db } from "@/db/client";
 
 const AUTH_COOKIE_NAME = "auth_session";
-
-export function getSecretKey(): Uint8Array {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error(
-        "FATAL SECURITY CONFIGURATION ERROR: AUTH_SECRET environment variable must be defined in production."
-      );
-    }
-    return new TextEncoder().encode(
-      "default_dev_secret_must_be_changed_in_prod_32chars!"
-    );
-  }
-  return new TextEncoder().encode(secret);
-}
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);

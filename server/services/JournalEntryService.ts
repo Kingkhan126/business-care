@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { JournalRepository } from "../repositories/JournalRepository";
 import { AccountingPeriodService } from "./AccountingPeriodService";
@@ -104,8 +105,7 @@ export class JournalEntryService {
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
-          const count = await tx.journalEntry.count({ where: { organizationId: user.activeOrganizationId! } });
-          const journalNumber = `JE-${String(count + 1 + attempts).padStart(6, "0")}`;
+          const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-", 6);
 
           const existing = await tx.journalEntry.findFirst({
             where: { journalNumber, organizationId: user.activeOrganizationId! },
@@ -248,8 +248,7 @@ export class JournalEntryService {
       let attempts = 0;
       let journalNumber = "";
       while (attempts < 5) {
-        const count = await tx.journalEntry.count({ where: { organizationId: user.activeOrganizationId! } });
-        journalNumber = `JE-${String(count + 1 + attempts).padStart(6, "0")}`;
+        journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-", 6);
         const existing = await tx.journalEntry.findFirst({
           where: { journalNumber, organizationId: user.activeOrganizationId! },
         });

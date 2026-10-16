@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { ExpenseCategoryService } from "@/server/services/ExpenseCategoryService";
@@ -15,13 +16,7 @@ export async function GET(
     const category = await ExpenseCategoryService.getCategoryById(user, params.id);
     return NextResponse.json(category);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -43,13 +38,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -64,12 +53,6 @@ export async function DELETE(
     const deactivated = await ExpenseCategoryService.deactivateCategory(user, params.id);
     return NextResponse.json({ success: true, data: deactivated });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

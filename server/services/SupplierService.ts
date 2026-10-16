@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { SupplierRepository } from "../repositories/SupplierRepository";
 import { AuditRepository } from "../repositories/AuditRepository";
@@ -52,8 +53,7 @@ export class SupplierService {
         return await db.$transaction(async (tx) => {
           let supplierNumber = input.supplierNumber?.trim();
           if (!supplierNumber) {
-            const count = await tx.supplier.count({ where: { organizationId: user.activeOrganizationId! } });
-            supplierNumber = `SUP-${String(count + 1 + attempts).padStart(6, "0")}`;
+            supplierNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "supplier", "SUP-", 6);
           }
 
           const existing = await tx.supplier.findFirst({

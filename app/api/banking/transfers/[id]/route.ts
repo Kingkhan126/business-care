@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { BankTransferService } from "@/server/services/BankTransferService";
@@ -14,9 +15,6 @@ export async function GET(
     const transfer = await BankTransferService.getById(user, params.id);
     return NextResponse.json({ success: true, data: transfer });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

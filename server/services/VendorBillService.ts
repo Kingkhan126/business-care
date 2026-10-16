@@ -1,3 +1,5 @@
+import { validateTransactionReferences } from "./TransactionReferenceService";
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { VendorBillRepository } from "../repositories/VendorBillRepository";
 import { SupplierRepository } from "../repositories/SupplierRepository";
@@ -75,8 +77,8 @@ export class VendorBillService {
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
-          const count = await tx.vendorBill.count({ where: { organizationId: user.activeOrganizationId! } });
-          const billNumber = `BILL-${String(count + 1 + attempts).padStart(6, "0")}`;
+          await validateTransactionReferences(tx, user.activeOrganizationId!, input);
+          const billNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "vendorBill", "BILL-", 6);
 
           const existing = await tx.vendorBill.findFirst({
             where: { billNumber, organizationId: user.activeOrganizationId! },

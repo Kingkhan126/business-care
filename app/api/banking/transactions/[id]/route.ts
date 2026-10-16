@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { BankTransactionService } from "@/server/services/BankTransactionService";
@@ -15,10 +16,7 @@ export async function GET(
     const transaction = await BankTransactionService.getById(user, params.id);
     return NextResponse.json({ success: true, data: transaction });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -36,9 +34,6 @@ export async function PUT(
     const transaction = await BankTransactionService.categorize(user, params.id, validated);
     return NextResponse.json({ success: true, data: transaction });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

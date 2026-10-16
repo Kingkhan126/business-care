@@ -67,7 +67,6 @@ export class AccountingPeriodService {
     const runner = txPrisma || db;
 
     if (txPrisma) {
-      try {
         const rawLocked: any[] = await txPrisma.$queryRaw`
           SELECT id, status, name FROM "AccountingPeriod" 
           WHERE "organizationId" = ${organizationId} 
@@ -84,13 +83,9 @@ export class AccountingPeriodService {
           }
           return period;
         }
-      } catch (err: any) {
-        if (err instanceof ValidationError) throw err;
-        // Fallback to standard query if raw lock query fails
-      }
     }
 
-    const period = await PeriodRepository.findPeriodByDate(organizationId, entryDate);
+    const period = await runner.accountingPeriod.findFirst({ where: { organizationId, startDate: { lte: entryDate }, endDate: { gte: entryDate } } });
     if (!period) {
       // Auto-initialize current year period if none exists
       const fiscalYear = entryDate.getFullYear();
@@ -98,8 +93,9 @@ export class AccountingPeriodService {
       const endDate = new Date(fiscalYear, entryDate.getMonth() + 1, 0, 23, 59, 59, 999);
       const monthName = startDate.toLocaleString("en-US", { month: "short" });
 
-      return runner.accountingPeriod.create({
-        data: {
+      await runner.accountingPeriod.createMany({
+        skipDuplicates: true,
+        data: [{
           organizationId,
           fiscalYear,
           periodNumber: entryDate.getMonth() + 1,
@@ -107,8 +103,14 @@ export class AccountingPeriodService {
           startDate,
           endDate,
           status: "OPEN",
-        },
+        }],
       });
+      // A concurrent creator may have won. Lock and read the actual period.
+      if (txPrisma) await txPrisma.$queryRaw`SELECT id FROM "AccountingPeriod" WHERE "organizationId" = ${organizationId} AND "startDate" <= ${entryDate} AND "endDate" >= ${entryDate} FOR UPDATE`;
+      const initialized = await runner.accountingPeriod.findFirst({ where: { organizationId, startDate: { lte: entryDate }, endDate: { gte: entryDate } } });
+      if (!initialized) throw new ValidationError("No accounting period covers this entry date. Generate the organization's fiscal periods first.");
+      if (initialized.status !== "OPEN") throw new ValidationError(`Accounting period '${initialized.name}' is ${initialized.status}.`);
+      return initialized;
     }
 
     if (period.status !== "OPEN") {
@@ -128,11 +130,7 @@ export class AccountingPeriodService {
     requirePermission(user, "accounting.close_period");
 
     return db.$transaction(async (tx) => {
-      try {
-        await tx.$queryRaw`SELECT id FROM "AccountingPeriod" WHERE id = ${periodId} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
-      } catch {
-        // Fallback
-      }
+      await tx.$queryRaw`SELECT id FROM "AccountingPeriod" WHERE id = ${periodId} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       const period = await tx.accountingPeriod.findFirst({
         where: { id: periodId, organizationId: user.activeOrganizationId! },

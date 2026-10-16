@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -28,6 +29,7 @@ import {
 } from "lucide-react";
 
 export interface SidebarProps {
+  permissions: string[];
   isOpen: boolean;
   onCloseMobile: () => void;
 }
@@ -99,8 +101,16 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-export function Sidebar({ isOpen, onCloseMobile }: SidebarProps) {
+export function Sidebar({ isOpen, onCloseMobile, permissions }: SidebarProps) {
   const pathname = usePathname();
+  const required: Record<string, string> = {
+    "/organization": "organization.view", "/users": "users.view", "/settings": "organization.update", "/audit": "audit.view",
+    "/customers": "customers.read", "/estimates": "estimates.read", "/sales-orders": "orders.read", "/invoices": "invoices.read", "/payments": "payments.read",
+    "/vendors": "vendors.read", "/purchase-orders": "purchases.read", "/vendor-bills": "purchases.read", "/vendor-payments": "purchases.read",
+    "/products": "products.read", "/inventory": "inventory.read", "/expenses": "expense.read", "/expenses/categories": "expense.categories.manage", "/banking": "banking.read", "/accounting": "accounting.read",
+  };
+  const groups = NAV_GROUPS.map(group => ({ ...group, items: group.items.filter(item => !item.isFuture && (!required[item.href] || permissions.includes(required[item.href]))) })).filter(group => group.items.length > 0);
+
 
   return (
     <>
@@ -112,7 +122,7 @@ export function Sidebar({ isOpen, onCloseMobile }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar Container — floating 3D glass panel */}
+      {/* Sidebar Container â€” floating 3D glass panel */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col glass-panel border-r border-indigo-500/15 shadow-[4px_0_30px_rgba(0,0,0,0.5)] text-slate-300 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0",
@@ -123,9 +133,10 @@ export function Sidebar({ isOpen, onCloseMobile }: SidebarProps) {
         <div className="flex h-16 items-center justify-between border-b border-indigo-500/15 px-4 sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0 group">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-0.5 shadow-glow-indigo border border-white/20 group-hover:scale-105 transition-transform duration-200">
-              <img
+              <Image
                 src="/logo.jpg"
-                alt="AD CARE & MEDS PHARMACY"
+                width={36} height={36}
+                alt="BizEngine"
                 className="h-full w-full object-contain rounded-lg"
               />
             </div>
@@ -136,7 +147,7 @@ export function Sidebar({ isOpen, onCloseMobile }: SidebarProps) {
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-[10px] text-emerald-400 font-mono font-medium">
-                  Phase 7 Certified
+                  Business workspace
                 </span>
               </div>
             </div>
@@ -152,7 +163,7 @@ export function Sidebar({ isOpen, onCloseMobile }: SidebarProps) {
 
         {/* Sidebar Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-          {NAV_GROUPS.map((group) => (
+          {groups.map((group) => (
             <div key={group.title} className="space-y-1">
               <div className="flex items-center gap-1.5 px-3">
                 <span className="h-1 w-1 rounded-full bg-indigo-400/60" />

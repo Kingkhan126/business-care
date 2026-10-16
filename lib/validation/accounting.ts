@@ -1,3 +1,4 @@
+import { validDate } from "./query";
 import { z } from "zod";
 
 export const AccountTypeEnum = z.enum(["ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"]);
@@ -108,7 +109,7 @@ export const JournalLineSchema = z.object({
 export type JournalLineInput = z.input<typeof JournalLineSchema>;
 
 export const createJournalSchema = z.object({
-  entryDate: z.string().or(z.date()),
+  entryDate: validDate,
   memo: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   referenceType: z.string().optional().nullable(),

@@ -89,22 +89,6 @@ export class BankReconciliationRepository {
     });
   }
 
-  static async findNextReconciliationNumber(organizationId: string): Promise<string> {
-    const currentYear = new Date().getFullYear();
-    const count = await db.bankReconciliation.count({
-      where: {
-        organizationId,
-        statementEndDate: {
-          gte: new Date(`${currentYear}-01-01`),
-          lte: new Date(`${currentYear}-12-31T23:59:59.999Z`),
-        },
-      },
-    });
-
-    const sequence = String(count + 1).padStart(5, "0");
-    return `REC-${currentYear}-${sequence}`;
-  }
-
   static async create(data: Prisma.BankReconciliationCreateInput, tx?: Prisma.TransactionClient) {
     const client = tx || db;
     return client.bankReconciliation.create({

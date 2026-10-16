@@ -13,7 +13,10 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "tsx prisma/seed.ts",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "typecheck": "tsc --noEmit --incremental false",
+    "test:integration": "node scripts/test-integration.mjs",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1140.0",

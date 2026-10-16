@@ -1,3 +1,4 @@
+vi.mock("@/server/services/DocumentNumberService", () => import("../helpers/mockDocumentNumber"));
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { PurchaseOrderService } from "@/server/services/PurchaseOrderService";
 import { VendorBillService } from "@/server/services/VendorBillService";

@@ -1,3 +1,4 @@
+import { safeUserSelect } from "./safeUser";
 import { db } from "@/db/client";
 import { OrganizationMember, Prisma } from "@prisma/client";
 import { NotFoundError } from "@/lib/errors";
@@ -38,7 +39,7 @@ export class MembershipRepository {
         organizationId,
       },
       include: {
-        user: true,
+        user: { select: safeUserSelect },
         role: true,
       },
     });

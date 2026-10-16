@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { OrganizationService } from "@/server/services/OrganizationService";
@@ -13,17 +14,8 @@ export async function GET() {
 
     const org = await OrganizationService.getOrganization(user);
     return NextResponse.json({ success: true, organization: org });
-  } catch (err: unknown) {
-    if (err instanceof AppError) {
-      return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: err.statusCode }
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch organization" },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
 
@@ -39,16 +31,7 @@ export async function PUT(request: Request) {
 
     const updatedOrg = await OrganizationService.updateProfile(user, validated);
     return NextResponse.json({ success: true, organization: updatedOrg });
-  } catch (err: unknown) {
-    if (err instanceof AppError) {
-      return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: err.statusCode }
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: "Failed to update organization" },
-      { status: 400 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

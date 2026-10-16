@@ -1,3 +1,4 @@
+vi.mock("@/server/services/DocumentNumberService", () => import("../helpers/mockDocumentNumber"));
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { BankAccountService } from "@/server/services/BankAccountService";
 import { BankTransferService } from "@/server/services/BankTransferService";
@@ -17,6 +18,7 @@ import { db } from "@/db/client";
 vi.mock("@/db/client", () => ({
   db: {
     $transaction: vi.fn((cb) => cb(db)),
+    $queryRaw: vi.fn().mockResolvedValue([]),
     bankAccount: {
       findFirst: vi.fn(),
       findMany: vi.fn(),

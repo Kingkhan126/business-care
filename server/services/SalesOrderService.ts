@@ -1,3 +1,5 @@
+import { validateTransactionReferences } from "./TransactionReferenceService";
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { SalesOrderRepository } from "../repositories/SalesOrderRepository";
 import { CustomerRepository } from "../repositories/CustomerRepository";
@@ -60,8 +62,8 @@ export class SalesOrderService {
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
-          const count = await tx.salesOrder.count({ where: { organizationId: user.activeOrganizationId! } });
-          const orderNumber = `SO-${String(count + 1 + attempts).padStart(6, "0")}`;
+          await validateTransactionReferences(tx, user.activeOrganizationId!, input);
+          const orderNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "salesOrder", "SO-", 6);
 
           const existing = await tx.salesOrder.findFirst({
             where: { orderNumber, organizationId: user.activeOrganizationId! },
@@ -158,8 +160,7 @@ export class SalesOrderService {
       let attempts = 0;
       let invoiceNumber = "";
       while (attempts < 5) {
-        const count = await tx.salesInvoice.count({ where: { organizationId: user.activeOrganizationId! } });
-        invoiceNumber = `INV-${String(count + 1 + attempts).padStart(6, "0")}`;
+        invoiceNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "salesInvoice", "INV-", 6);
         const existing = await tx.salesInvoice.findFirst({
           where: { invoiceNumber, organizationId: user.activeOrganizationId! },
         });

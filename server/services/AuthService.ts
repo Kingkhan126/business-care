@@ -1,7 +1,4 @@
 import { UserRepository } from "../repositories/UserRepository";
-import { OrganizationRepository } from "../repositories/OrganizationRepository";
-import { RoleRepository } from "../repositories/RoleRepository";
-import { MembershipRepository } from "../repositories/MembershipRepository";
 import { AuditRepository } from "../repositories/AuditRepository";
 import { hashPassword, verifyPassword, createSessionToken } from "@/lib/auth/session";
 import { ConflictError, UnauthorizedError, ValidationError } from "@/lib/errors";
@@ -59,46 +56,27 @@ export class AuthService {
 
     const passwordHash = await hashPassword(input.password);
 
-    // Create User
-    const user = await UserRepository.create({
-      email: input.email,
-      name: input.name,
-      passwordHash,
-      status: "ACTIVE",
-      emailVerified: true,
-    });
-
-    // Create Organization
-    const org = await OrganizationRepository.create({
-      name: input.organizationName,
-      email: input.email,
-      currency: "USD",
-      timezone: "UTC",
-      country: "US",
-    });
-
-    // Find Owner Role
-    const ownerRole = await RoleRepository.findByName("Owner");
-    if (!ownerRole) {
-      throw new ValidationError("System Owner role not found. Please run seed script.");
-    }
-
-    // Create Owner Membership
-    await MembershipRepository.create({
-      organization: { connect: { id: org.id } },
-      user: { connect: { id: user.id } },
-      role: { connect: { id: ownerRole.id } },
-      status: "ACTIVE",
-    });
-
-    // Audit Log
-    await AuditRepository.create({
-      organization: { connect: { id: org.id } },
-      actor: { connect: { id: user.id } },
-      action: "organization.created",
-      entityType: "Organization",
-      entityId: org.id,
-      metadata: { organizationName: org.name },
+    // Commit the entire account setup together, including its audit record.
+    const { user, org } = await db.$transaction(async (tx) => {
+      const ownerRole = await tx.role.findFirst({
+        where: { name: "Owner", organizationId: null, isSystem: true },
+      });
+      if (!ownerRole) {
+        throw new ValidationError("System Owner role not found. Please run seed script.");
+      }
+      const user = await tx.user.create({
+        data: { email: input.email, name: input.name, passwordHash, status: "ACTIVE", emailVerified: false },
+      });
+      const org = await tx.organization.create({
+        data: { name: input.organizationName, email: input.email, currency: "USD", timezone: "UTC", country: "US" },
+      });
+      await tx.organizationMember.create({
+        data: { organizationId: org.id, userId: user.id, roleId: ownerRole.id, status: "ACTIVE" },
+      });
+      await tx.auditLog.create({
+        data: { organizationId: org.id, actorId: user.id, action: "organization.created", entityType: "Organization", entityId: org.id, metadata: { organizationName: org.name } },
+      });
+      return { user, org };
     });
 
     const token = await createSessionToken({

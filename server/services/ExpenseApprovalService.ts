@@ -1,3 +1,4 @@
+import { safeUserSelect } from "../repositories/safeUser";
 import { db } from "@/db/client";
 import { AuditRepository } from "../repositories/AuditRepository";
 import { ExpenseAuditAction } from "@/lib/audit/expenseEvents";
@@ -25,13 +26,11 @@ export class ExpenseApprovalService {
 
     return db.$transaction(async (tx) => {
       // 1. Database Row Lock for Concurrency Serialization
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       const expense = await tx.expense.findFirst({
         where: { id, organizationId: orgId },
-        include: { lines: true, claimant: true },
+        include: { lines: true, claimant: { select: safeUserSelect } },
       });
 
       if (!expense) {
@@ -70,7 +69,7 @@ export class ExpenseApprovalService {
         include: {
           category: true,
           supplier: true,
-          claimant: true,
+          claimant: { select: safeUserSelect },
           lines: true,
         },
       });
@@ -112,9 +111,7 @@ export class ExpenseApprovalService {
 
     return db.$transaction(async (tx) => {
       // 1. Database Row Lock for Concurrency Serialization
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       const expense = await tx.expense.findFirst({
         where: { id, organizationId: orgId },
@@ -140,7 +137,7 @@ export class ExpenseApprovalService {
           approvedById: null,
           approvedAt: null,
         },
-        include: { lines: true, category: true, claimant: true },
+        include: { lines: true, category: true, claimant: { select: safeUserSelect } },
       });
 
       await tx.auditLog.create({

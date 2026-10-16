@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { TeamService } from "@/server/services/TeamService";
@@ -13,17 +14,8 @@ export async function GET() {
 
     const invitations = await TeamService.listInvitations(user);
     return NextResponse.json({ success: true, invitations });
-  } catch (err: unknown) {
-    if (err instanceof AppError) {
-      return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: err.statusCode }
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch invitations" },
-      { status: 500 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
 
@@ -43,16 +35,7 @@ export async function POST(request: Request) {
       invitation,
       message: "Invitation created (Email delivery pending/not configured in dev mode)",
     });
-  } catch (err: unknown) {
-    if (err instanceof AppError) {
-      return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: err.statusCode }
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: "Failed to create invitation" },
-      { status: 400 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

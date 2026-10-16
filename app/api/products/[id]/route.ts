@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { ProductService } from "@/server/services/ProductService";
@@ -12,10 +13,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const product = await ProductService.getById(user, params.id);
     return NextResponse.json(product);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -30,10 +28,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const updated = await ProductService.update(user, params.id, validated);
     return NextResponse.json(updated);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -50,9 +45,6 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const updated = await ProductService.updateStatus(user, params.id, body.status);
     return NextResponse.json(updated);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

@@ -9,8 +9,10 @@ export class OrganizationSettingsRepository {
 
     if (!settings) {
       // Auto-create default settings if missing
-      settings = await db.organizationSettings.create({
-        data: {
+      settings = await db.organizationSettings.upsert({
+        where: { organizationId },
+        update: {},
+        create: {
           organizationId,
           dateFormat: "YYYY-MM-DD",
           timeFormat: "24h",

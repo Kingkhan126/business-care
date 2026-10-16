@@ -1,33 +1,21 @@
-# Product Roadmap & Phase Breakdown
+# Implementation status
 
-## Phase 1 — Industrial Foundation (COMPLETED)
-- Next.js 14 App Router TypeScript Foundation
-- Responsive Application Shell (360px - 1440px+)
-- Custom SaaS Design System (`components/ui/`)
-- Multi-Tenant Schema & Prisma Layer (`User`, `Organization`, `OrganizationMember`, `Role`, `Permission`, `RolePermission`, `AuditLog`)
-- Server-Side Tenant Isolation (`assertTenantAccess`) & Granular RBAC (`requirePermission`)
-- Development Seed System (`prisma/seed.ts`)
-- Unit Testing Foundation (Vitest)
-- Architecture & Engineering Documentation (`docs/`)
+## Implemented
 
-## Phase 2 — Commercial Core (Sales & Receivables)
-- Customers Directory & Multiple Contact Addresses
-- Sales Estimates & Quotes
-- Sales Invoices Engine (Tax computation, PDF generation)
-- Customer Payments & Receipt Allocations
+Organization membership and permissions; commercial sales and purchasing workflows; catalog and warehouse inventory; double-entry journals and accounting periods; financial statements; CSV bank imports, matching, transfers, and reconciliation; expense approval, posting, payment, and attachments.
 
-## Phase 3 — Procurement & Inventory Control
-- Vendor & Supplier Management
-- Purchase Orders & Goods Received Notes (GRN)
-- Product Catalog & Price Lists
-- Multi-Warehouse Inventory Management & Stock Adjustments
+## Reliability work delivered
 
-## Phase 4 — Financials & General Ledger Accounting
-- Overhead Expense Management & Receipt Uploads
-- Bank Feeds & CSV Reconciliation Engine
-- Double-Entry General Ledger & Chart of Accounts
+Safe nested user responses; dashboard permissions and ledger metrics; reversal-aware historical reports; tenant reference validation; transactional registration; atomic document counters; fail-closed row locks; safe duplicate imports; consistent API errors; bounded pagination; unit and PostgreSQL integration verification; CI checks.
 
-## Phase 5 — Intelligence, Reporting & Forecasting
-- Profit & Loss (Income Statement) & Balance Sheet
-- 90-Day Cash Flow Forecasting Engine
-- Executive Dashboard Insights
+See [reliability.md](reliability.md) for details and remaining limitations.
+
+## Planned
+
+- Forecasting and scenario planning
+- A consolidated Reports hub and additional operational/aging reports
+- Foreign-exchange conversion and consolidated multi-currency reporting
+- Direct connections to bank-feed providers
+- Additional browser journey coverage and production operations validation
+
+The legacy Purchases landing page is a placeholder; purchase orders, vendor bills, and vendor payments have dedicated working modules.

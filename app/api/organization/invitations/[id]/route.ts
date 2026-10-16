@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { TeamService } from "@/server/services/TeamService";
@@ -15,16 +16,7 @@ export async function DELETE(
 
     const updated = await TeamService.revokeInvitation(user, params.id);
     return NextResponse.json({ success: true, invitation: updated });
-  } catch (err: unknown) {
-    if (err instanceof AppError) {
-      return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: err.statusCode }
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: "Failed to revoke invitation" },
-      { status: 400 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

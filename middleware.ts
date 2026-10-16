@@ -1,13 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-import { getSecretKey } from "@/lib/auth/session";
+import { getSecretKey } from "@/lib/auth/secret";
 
 const PUBLIC_ROUTES = ["/login", "/register", "/api/auth/login", "/api/auth/register", "/api/health"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
   const token = request.cookies.get("auth_session")?.value;
 
   let isValidSession = false;
@@ -23,6 +23,9 @@ export async function middleware(request: NextRequest) {
 
   // Redirect unauthenticated user trying to access protected dashboard routes
   if (!isValidSession && !isPublicRoute && pathname !== "/") {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ success: false, error: "Authentication required", code: "UNAUTHORIZED" }, { status: 401 });
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);

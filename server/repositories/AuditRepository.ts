@@ -2,8 +2,8 @@ import { db } from "@/db/client";
 import { Prisma } from "@prisma/client";
 
 export class AuditRepository {
-  static async create(data: Prisma.AuditLogCreateInput) {
-    return db.auditLog.create({ data });
+  static async create(data: Prisma.AuditLogCreateInput, tx?: Prisma.TransactionClient) {
+    return (tx || db).auditLog.create({ data });
   }
 
   static async listByOrganization(organizationId: string, limit = 50) {

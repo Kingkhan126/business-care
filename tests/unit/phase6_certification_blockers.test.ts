@@ -1,3 +1,4 @@
+vi.mock("@/server/services/DocumentNumberService", () => import("../helpers/mockDocumentNumber"));
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { BankAccountService } from "@/server/services/BankAccountService";
 import { BankTransferService } from "@/server/services/BankTransferService";
@@ -28,6 +29,7 @@ vi.mock("@/db/client", () => ({
       delete: vi.fn(),
     },
     bankTransaction: {
+      createMany: vi.fn().mockResolvedValue({ count: 1 }),
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       findMany: vi.fn(),
@@ -259,7 +261,7 @@ describe("Phase 6 — Certification Blocker Tests", () => {
       const account = { id: "acc_import", organizationId: "org_A", accountName: "Checking", currentBalance: 5000, currency: "USD", linkedLedgerAccountId: "gl_checking" };
       (db.bankAccount.findFirst as any).mockResolvedValue(account);
       (db.bankTransaction.findMany as any).mockResolvedValue([]);
-      (db.bankTransaction.create as any).mockImplementation(async ({ data }: any) => ({ id: "tx_1", ...data }));
+      (db.bankTransaction.createMany as any).mockResolvedValue({ count: 1 });
       (db.bankImportBatch.create as any).mockImplementation(async ({ data }: any) => ({ id: "batch_1", ...data }));
       (db.bankAccount.update as any).mockResolvedValue(account);
 
@@ -270,7 +272,7 @@ describe("Phase 6 — Certification Blocker Tests", () => {
       });
 
       expect(db.journalEntry.create).not.toHaveBeenCalled();
-      expect(db.bankTransaction.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "UNMATCHED", source: "IMPORT" }) }));
+      expect(db.bankTransaction.createMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "UNMATCHED", source: "IMPORT" }) }));
     });
 
     it("Matching to CustomerPayment does NOT create GL journal", async () => {

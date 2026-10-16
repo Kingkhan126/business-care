@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { CustomerPaymentService } from "@/server/services/CustomerPaymentService";
@@ -15,9 +16,6 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const allocation = await CustomerPaymentService.allocatePayment(user, params.id, validated);
     return NextResponse.json(allocation, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

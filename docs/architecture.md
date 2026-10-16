@@ -26,7 +26,7 @@ BizEngine is structured as a **Modular Monolith** using Next.js 14 App Router. T
 ```
 
 ## Layer Responsibilities
-1. **Presentation Layer (`app/`, `components/`)**: Handles UI rendering, responsive layouts, form interactions, and route navigation. Direct database queries inside client or UI components are strictly forbidden.
+1. **Presentation Layer (`app/`, `components/`)**: Handles UI rendering, responsive layouts, form interactions, and route navigation. Client components never access the database. Dashboard queries and aggregates live in DashboardService, which checks each domain permission before querying. Existing server-rendered pages should use their domain services for authorization.
 2. **Application Layer (`server/services/`, `lib/validation/`)**: Encapsulates business logic, input parsing, and workflow orchestration.
 3. **Security Layer (`server/authorization/`, `middleware.ts`)**: Enforces server-side authentication, RBAC permission verification (`requirePermission`), and tenant boundary protection (`assertTenantAccess`).
 4. **Data Access Layer (`server/repositories/`, `db/client.ts`)**: Encapsulates all Prisma database operations and parameter queries.

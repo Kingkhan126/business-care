@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { VendorPaymentRepository } from "../repositories/VendorPaymentRepository";
 import { SupplierRepository } from "../repositories/SupplierRepository";
@@ -53,8 +54,7 @@ export class VendorPaymentService {
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
-          const count = await tx.vendorPayment.count({ where: { organizationId: user.activeOrganizationId! } });
-          const paymentNumber = `VPAY-${String(count + 1 + attempts).padStart(6, "0")}`;
+          const paymentNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "vendorPayment", "VPAY-", 6);
 
           const existing = await tx.vendorPayment.findFirst({
             where: { paymentNumber, organizationId: user.activeOrganizationId! },

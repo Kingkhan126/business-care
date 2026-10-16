@@ -53,14 +53,14 @@ export function UserMenu({ user }: { user: SessionUser }) {
             </div>
 
             <div className="py-1">
-              <Link
+              {user.permissions.includes("organization.update") && <Link
                 href="/settings"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
               >
                 <UserIcon className="h-4 w-4 text-slate-500" />
-                Account Settings
-              </Link>
+                Organization Settings
+              </Link>}
             </div>
 
             <div className="border-t border-white/5 pt-1">

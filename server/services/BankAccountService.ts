@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { BankAccountRepository } from "../repositories/BankAccountRepository";
 import { AccountingPeriodService } from "./AccountingPeriodService";
@@ -50,7 +51,7 @@ export class BankAccountService {
           accountId: account.linkedLedgerAccountId,
           journalEntry: {
             organizationId: user.activeOrganizationId,
-            status: "POSTED",
+            status: { in: ["POSTED", "REVERSED"] },
           },
         },
         select: { debit: true, credit: true },
@@ -181,10 +182,7 @@ export class BankAccountService {
             }
 
             if (equityAccountId) {
-              const count = await tx.journalEntry.count({
-                where: { organizationId: user.activeOrganizationId! },
-              });
-              const journalNumber = `JE-OPN-${String(count + 1).padStart(5, "0")}`;
+              const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-OPN-", 5);
               const absAmount = Math.abs(openingBalance);
 
               await tx.journalEntry.create({

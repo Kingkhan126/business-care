@@ -1,3 +1,4 @@
+import { validDate } from "./query";
 import { z } from "zod";
 
 export const BankAccountTypeEnum = z.enum([
@@ -60,7 +61,7 @@ export const CreateBankAccountSchema = z.object({
   institutionName: z.string().max(100).optional().nullable(),
   currency: z.string().min(3).max(3).default("USD"),
   openingBalance: z.number().default(0),
-  openingBalanceDate: z.string().or(z.date()).optional().nullable(),
+  openingBalanceDate: validDate.optional().nullable(),
   linkedLedgerAccountId: z.string().optional().nullable(),
   description: z.string().max(500).optional().nullable(),
   createOpeningBalanceJournal: z.boolean().default(false),
@@ -80,8 +81,8 @@ export const UpdateBankAccountSchema = z.object({
 // Bank Transaction Validation
 export const CreateBankTransactionSchema = z.object({
   bankAccountId: z.string().min(1, "Bank account is required"),
-  transactionDate: z.string().or(z.date()),
-  valueDate: z.string().or(z.date()).optional().nullable(),
+  transactionDate: validDate,
+  valueDate: validDate.optional().nullable(),
   description: z.string().min(1, "Description is required").max(255),
   reference: z.string().max(100).optional().nullable(),
   amount: z.number().refine((val) => val !== 0, "Amount cannot be zero"),
@@ -105,7 +106,7 @@ export const CreateBankTransferSchema = z.object({
   toBankAccountId: z.string().min(1, "Destination bank account is required"),
   amount: z.number().positive("Transfer amount must be greater than zero"),
   feeAmount: z.number().min(0, "Fee cannot be negative").default(0),
-  transferDate: z.string().or(z.date()),
+  transferDate: validDate,
   reference: z.string().max(100).optional().nullable(),
   memo: z.string().max(500).optional().nullable(),
   idempotencyKey: z.string().max(100).optional().nullable(),
@@ -135,8 +136,8 @@ export const UnmatchTransactionSchema = z.object({
 // Reconciliation Validation
 export const StartReconciliationSchema = z.object({
   bankAccountId: z.string().min(1, "Bank account is required"),
-  statementStartDate: z.string().or(z.date()),
-  statementEndDate: z.string().or(z.date()),
+  statementStartDate: validDate,
+  statementEndDate: validDate,
   statementEndingBalance: z.number(),
   notes: z.string().max(500).optional().nullable(),
 });

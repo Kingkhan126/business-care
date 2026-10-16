@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { BankTransactionRepository } from "../repositories/BankTransactionRepository";
 import { BankAccountRepository } from "../repositories/BankAccountRepository";
@@ -132,10 +133,7 @@ export class BankTransactionService {
           throw new NotFoundError("Target GL account not found.");
         }
 
-        const count = await tx.journalEntry.count({
-          where: { organizationId: user.activeOrganizationId! },
-        });
-        const journalNumber = `JE-BNK-${String(count + 1).padStart(5, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-BNK-", 5);
         const absAmount = Math.abs(amount);
 
         const journal = await tx.journalEntry.create({
@@ -244,10 +242,7 @@ export class BankTransactionService {
           transaction.transactionDate
         );
 
-        const count = await tx.journalEntry.count({
-          where: { organizationId: user.activeOrganizationId! },
-        });
-        const journalNumber = `JE-CAT-${String(count + 1).padStart(5, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-CAT-", 5);
         const amountNum = Number(transaction.amount);
         const absAmount = Math.abs(amountNum);
 
@@ -371,10 +366,7 @@ export class BankTransactionService {
         });
 
         if (originalJournal && originalJournal.status === "POSTED") {
-          const revCount = await tx.journalEntry.count({
-            where: { organizationId: user.activeOrganizationId! },
-          });
-          const revJournalNumber = `JE-REV-${String(revCount + 1).padStart(5, "0")}`;
+          const revJournalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-REV-", 5);
 
           const reversal = await tx.journalEntry.create({
             data: {

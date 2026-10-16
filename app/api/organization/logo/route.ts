@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { OrganizationService } from "@/server/services/OrganizationService";
@@ -28,17 +29,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, logoUrl: updatedOrg.logoUrl });
-  } catch (err: unknown) {
-    if (err instanceof AppError) {
-      return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: err.statusCode }
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: "Failed to upload logo" },
-      { status: 400 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
 
@@ -51,16 +43,7 @@ export async function DELETE() {
 
     await OrganizationService.removeLogo(user);
     return NextResponse.json({ success: true, message: "Logo removed" });
-  } catch (err: unknown) {
-    if (err instanceof AppError) {
-      return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: err.statusCode }
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: "Failed to remove logo" },
-      { status: 400 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

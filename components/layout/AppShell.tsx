@@ -23,6 +23,7 @@ export function AppShell({
   return (
     <div className="flex h-screen w-full overflow-hidden bg-transparent text-slate-200 font-sans">
       <Sidebar
+        permissions={user.permissions}
         isOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
@@ -30,7 +31,7 @@ export function AppShell({
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
           user={user}
-          onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+          onToggleMobileSidebar={() => setIsMobileSidebarOpen(open => !open)}
           organizationName={organizationName}
           currency={currency}
         />

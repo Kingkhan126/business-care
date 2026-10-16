@@ -75,22 +75,6 @@ export class BankTransferRepository {
     });
   }
 
-  static async findNextTransferNumber(organizationId: string): Promise<string> {
-    const currentYear = new Date().getFullYear();
-    const count = await db.bankTransfer.count({
-      where: {
-        organizationId,
-        transferDate: {
-          gte: new Date(`${currentYear}-01-01`),
-          lte: new Date(`${currentYear}-12-31T23:59:59.999Z`),
-        },
-      },
-    });
-
-    const sequence = String(count + 1).padStart(5, "0");
-    return `TRF-${currentYear}-${sequence}`;
-  }
-
   static async create(data: Prisma.BankTransferCreateInput, tx?: Prisma.TransactionClient) {
     const client = tx || db;
     return client.bankTransfer.create({

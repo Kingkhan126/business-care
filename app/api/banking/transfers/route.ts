@@ -1,3 +1,5 @@
+import { parsePagination } from "@/lib/validation/query";
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { BankTransferService } from "@/server/services/BankTransferService";
@@ -15,8 +17,7 @@ export async function GET(request: Request) {
     const search = searchParams.get("search") || undefined;
     const startDate = searchParams.get("startDate") ? new Date(searchParams.get("startDate")!) : undefined;
     const endDate = searchParams.get("endDate") ? new Date(searchParams.get("endDate")!) : undefined;
-    const skip = searchParams.get("skip") ? parseInt(searchParams.get("skip")!) : undefined;
-    const take = searchParams.get("take") ? parseInt(searchParams.get("take")!) : undefined;
+    const { skip, take } = parsePagination(searchParams);
 
     const result = await BankTransferService.list(user, {
       bankAccountId,
@@ -30,10 +31,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -48,9 +46,6 @@ export async function POST(request: Request) {
     const transfer = await BankTransferService.executeTransfer(user, validated);
     return NextResponse.json({ success: true, data: transfer }, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

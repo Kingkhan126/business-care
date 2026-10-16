@@ -14,19 +14,12 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  let orgName = "Acme Global Enterprises";
-  let currency = "USD";
-
-  try {
-    const org = await OrganizationService.getOrganization(user);
-    orgName = org.name;
-    currency = org.currency;
-  } catch {
-    // Fallback if organization fetch fails
-  }
+  const organization = user.activeOrganizationId
+    ? await OrganizationService.getWorkspaceSummary(user)
+    : { name: "Workspace", currency: "" };
 
   return (
-    <AppShell user={user} organizationName={orgName} currency={currency}>
+    <AppShell user={user} organizationName={organization.name} currency={organization.currency}>
       {children}
     </AppShell>
   );

@@ -29,9 +29,10 @@ export interface ActivityItem {
 
 export interface RecentActivityListProps {
   activities: ActivityItem[];
+  currency?: string;
 }
 
-export function RecentActivityList({ activities }: RecentActivityListProps) {
+export function RecentActivityList({ activities, currency = "USD" }: RecentActivityListProps) {
   const [filter, setFilter] = useState<"ALL" | "INVOICE" | "EXPENSE" | "BANK">("ALL");
 
   const filtered = activities.filter((act) => {
@@ -77,13 +78,13 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
             Recent Financial Operations
           </h3>
           <p className="text-xs text-slate-400">
-            Real-time multi-module transaction stream across sales, expenses, and banking.
+            Recent issued invoices and posted expenses.
           </p>
         </div>
 
         {/* Filter Pills */}
         <div className="flex items-center gap-1.5 rounded-xl glass-surface p-1 border border-white/5">
-          {(["ALL", "INVOICE", "EXPENSE", "BANK"] as const).map((tab) => (
+          {(["ALL", "INVOICE", "EXPENSE"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
@@ -109,24 +110,9 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
             </div>
             <h4 className="text-sm font-semibold text-slate-200">No recent operations</h4>
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              Create customer invoices or record direct expenses to populate your transaction audit log.
+              Issued invoices and posted expenses will appear here.
             </p>
-            <div className="mt-4 flex justify-center gap-2">
-              <Link
-                href="/invoices"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white shadow-xs bevel-raised transition-all"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                New Invoice
-              </Link>
-              <Link
-                href="/expenses/new"
-                className="inline-flex items-center gap-1.5 rounded-lg glass-surface hover:bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors border border-white/10"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Record Expense
-              </Link>
-            </div>
+
           </div>
         ) : (
           filtered.map((item) => {
@@ -169,7 +155,7 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
                         isInflow ? "text-emerald-400" : "text-rose-400"
                       )}
                     >
-                      {isInflow ? "+PKR " : "-PKR "}{Math.abs(item.amount).toFixed(2)}
+                      {isInflow ? "+" : "-"}{currency} {Math.abs(item.amount).toFixed(2)}
                     </p>
                     <span className="text-[10px] text-slate-400 font-mono">
                       {item.status}

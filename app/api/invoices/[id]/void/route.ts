@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { InvoiceService } from "@/server/services/InvoiceService";
@@ -11,9 +12,6 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const voided = await InvoiceService.voidInvoice(user, params.id);
     return NextResponse.json(voided);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

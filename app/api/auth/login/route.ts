@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { AuthService } from "@/server/services/AuthService";
 import { setSessionCookie } from "@/lib/auth/session";
@@ -21,18 +22,7 @@ export async function POST(request: Request) {
       },
       activeOrganizationId: result.activeOrganizationId,
     });
-  } catch (err: unknown) {
-    console.error("[Login API Error]:", err);
-    if (err instanceof AppError || (err && typeof err === "object" && "statusCode" in err)) {
-      const appErr = err as AppError;
-      return NextResponse.json(
-        { success: false, error: appErr.message, code: appErr.code },
-        { status: appErr.statusCode || 400 }
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: "Authentication failed. Please verify your credentials or register." },
-      { status: 400 }
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

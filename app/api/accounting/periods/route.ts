@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { AccountingPeriodService } from "@/server/services/AccountingPeriodService";
@@ -14,10 +15,7 @@ export async function GET(request: Request) {
     const periods = await AccountingPeriodService.list(user, { fiscalYear });
     return NextResponse.json({ success: true, data: periods });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -32,9 +30,6 @@ export async function POST(request: Request) {
     const periods = await AccountingPeriodService.generateFiscalYearPeriods(user, fiscalYear);
     return NextResponse.json({ success: true, data: periods }, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

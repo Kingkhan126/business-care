@@ -1,3 +1,5 @@
+import { validateTransactionReferences } from "./TransactionReferenceService";
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { VendorCreditRepository } from "../repositories/VendorCreditRepository";
 import { SupplierRepository } from "../repositories/SupplierRepository";
@@ -58,8 +60,8 @@ export class VendorCreditService {
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
-          const count = await tx.vendorCredit.count({ where: { organizationId: user.activeOrganizationId! } });
-          const vendorCreditNumber = `VC-${String(count + 1 + attempts).padStart(6, "0")}`;
+          await validateTransactionReferences(tx, user.activeOrganizationId!, input);
+          const vendorCreditNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "vendorCredit", "VC-", 6);
 
           const existing = await tx.vendorCredit.findFirst({
             where: { vendorCreditNumber, organizationId: user.activeOrganizationId! },

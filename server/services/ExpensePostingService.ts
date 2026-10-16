@@ -1,3 +1,5 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
+import { safeUserSelect } from "../repositories/safeUser";
 import { db } from "@/db/client";
 import { AccountMappingService } from "./AccountMappingService";
 import { AccountingPeriodService } from "./AccountingPeriodService";
@@ -107,9 +109,7 @@ export class ExpensePostingService {
     try {
       return await db.$transaction(async (tx) => {
         // 1. Database Row Lock for Concurrency Serialization
-        if (typeof (tx as any).$queryRaw === "function") {
-          await (tx as any).$queryRaw`SELECT id FROM "Expense" WHERE id = ${expenseId} FOR UPDATE`.catch(() => {});
-        }
+        await tx.$queryRaw`SELECT id FROM "Expense" WHERE id = ${expenseId} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
         const expense = await tx.expense.findFirst({
           where: { id: expenseId, organizationId: orgId },
@@ -127,7 +127,7 @@ export class ExpensePostingService {
             bankAccount: {
               include: { linkedLedgerAccount: true },
             },
-            claimant: true,
+            claimant: { select: safeUserSelect },
             supplier: true,
           },
         });
@@ -271,8 +271,7 @@ export class ExpensePostingService {
         }
 
         // 8. Generate Sequential Journal Entry Number
-        const count = await tx.journalEntry.count({ where: { organizationId: orgId } });
-        const journalNumber = `JE-${String(count + 1).padStart(6, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, orgId, "journalEntry", "JE-", 6);
 
         // 9. Persist Journal Entry
         const journal = await tx.journalEntry.create({

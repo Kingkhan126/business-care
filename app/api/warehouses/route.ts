@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { MasterDataService } from "@/server/services/MasterDataService";
@@ -12,10 +13,7 @@ export async function GET() {
     const warehouses = await MasterDataService.listWarehouses(user);
     return NextResponse.json(warehouses);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -30,9 +28,6 @@ export async function POST(request: Request) {
     const warehouse = await MasterDataService.createWarehouse(user, validated);
     return NextResponse.json(warehouse, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

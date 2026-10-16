@@ -1,3 +1,4 @@
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { AccountMappingService } from "@/server/services/AccountMappingService";
@@ -12,10 +13,7 @@ export async function GET() {
     const mappings = await AccountMappingService.listMappings(user);
     return NextResponse.json({ success: true, data: mappings });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -30,9 +28,6 @@ export async function POST(request: Request) {
     const mapping = await AccountMappingService.setMapping(user, validated.mappingKey as any, validated.accountId);
     return NextResponse.json({ success: true, data: mapping }, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

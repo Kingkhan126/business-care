@@ -90,15 +90,8 @@ export class BankImportService {
 
     // Filter duplicates
     const allFingerprints = parsed.rows.map((r) => r.fingerprint);
-    const existingFingerprints = await BankTransactionRepository.findExistingFingerprints(
-      user.activeOrganizationId,
-      allFingerprints
-    );
-
-    const nonDuplicateRows = parsed.rows.filter((r) => !existingFingerprints.has(r.fingerprint));
-    const duplicateCount = parsed.rows.length - nonDuplicateRows.length;
-
     return db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "BankAccount" WHERE id = ${account.id} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
       // Re-check existing fingerprints inside tx under transaction boundary
       const existingInDb = await tx.bankTransaction.findMany({
         where: {
@@ -133,8 +126,7 @@ export class BankImportService {
 
       if (toImport.length > 0) {
         for (const row of toImport) {
-          try {
-            await tx.bankTransaction.create({
+          const inserted = await tx.bankTransaction.createMany({
               data: {
                 organizationId: user.activeOrganizationId!,
                 bankAccountId: account.id,
@@ -150,19 +142,13 @@ export class BankImportService {
                 importBatchId: batch.id,
                 createdById: user.id,
               },
+              skipDuplicates: true,
             });
+          if (inserted.count === 1) {
             netImportedAmount = CalculationEngine.roundMoney(netImportedAmount + row.amount);
             importedCount++;
-          } catch (err: any) {
-            if (
-              err.code === "P2002" ||
-              err.message?.includes("Unique constraint failed") ||
-              err.message?.includes("fingerprint")
-            ) {
-              finalDuplicates++;
-              continue;
-            }
-            throw err;
+          } else {
+            finalDuplicates++;
           }
         }
 
@@ -201,7 +187,7 @@ export class BankImportService {
           duplicateCount: finalDuplicates,
           netAmount: netImportedAmount,
         },
-      });
+      }, tx);
 
       return {
         batchId: batch.id,

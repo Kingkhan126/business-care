@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { AccountMappingService } from "./AccountMappingService";
 import { AccountingPeriodService } from "./AccountingPeriodService";
@@ -111,8 +112,7 @@ export class AccountingPostingService {
 
         const period = await AccountingPeriodService.assertOpenPeriod(user.activeOrganizationId!, invoice.issueDate, tx);
 
-        const count = await tx.journalEntry.count({ where: { organizationId: user.activeOrganizationId! } });
-        const journalNumber = `JE-${String(count + 1).padStart(6, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-", 6);
 
         const lines = [
           {
@@ -216,8 +216,7 @@ export class AccountingPostingService {
         const amount = Number(payment.amount);
         const period = await AccountingPeriodService.assertOpenPeriod(user.activeOrganizationId!, payment.paymentDate, tx);
 
-        const count = await tx.journalEntry.count({ where: { organizationId: user.activeOrganizationId! } });
-        const journalNumber = `JE-${String(count + 1).padStart(6, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-", 6);
 
         const journal = await tx.journalEntry.create({
           data: {
@@ -334,8 +333,7 @@ export class AccountingPostingService {
 
         const period = await AccountingPeriodService.assertOpenPeriod(user.activeOrganizationId!, bill.issueDate, tx);
 
-        const count = await tx.journalEntry.count({ where: { organizationId: user.activeOrganizationId! } });
-        const journalNumber = `JE-${String(count + 1).padStart(6, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-", 6);
 
         const lines: any[] = [];
 
@@ -452,8 +450,7 @@ export class AccountingPostingService {
         const amount = Number(payment.amount);
         const period = await AccountingPeriodService.assertOpenPeriod(user.activeOrganizationId!, payment.paymentDate, tx);
 
-        const count = await tx.journalEntry.count({ where: { organizationId: user.activeOrganizationId! } });
-        const journalNumber = `JE-${String(count + 1).padStart(6, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-", 6);
 
         const journal = await tx.journalEntry.create({
           data: {
@@ -553,8 +550,7 @@ export class AccountingPostingService {
 
         const period = await AccountingPeriodService.assertOpenPeriod(user.activeOrganizationId!, creditNote.issueDate, tx);
 
-        const count = await tx.journalEntry.count({ where: { organizationId: user.activeOrganizationId! } });
-        const journalNumber = `JE-${String(count + 1).padStart(6, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-", 6);
 
         const lines = [
           {
@@ -664,8 +660,7 @@ export class AccountingPostingService {
 
         const period = await AccountingPeriodService.assertOpenPeriod(user.activeOrganizationId!, vendorCredit.issueDate, tx);
 
-        const count = await tx.journalEntry.count({ where: { organizationId: user.activeOrganizationId! } });
-        const journalNumber = `JE-${String(count + 1).padStart(6, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-", 6);
 
         const lines = [
           {
@@ -775,8 +770,7 @@ export class AccountingPostingService {
 
         const period = await AccountingPeriodService.assertOpenPeriod(user.activeOrganizationId!, adjustment.createdAt, tx);
 
-        const count = await tx.journalEntry.count({ where: { organizationId: user.activeOrganizationId! } });
-        const journalNumber = `JE-${String(count + 1).padStart(6, "0")}`;
+        const journalNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "journalEntry", "JE-", 6);
 
         const isIncrease = qtyChange > 0;
         const lines = isIncrease

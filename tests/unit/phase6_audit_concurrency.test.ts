@@ -1,3 +1,4 @@
+vi.mock("@/server/services/DocumentNumberService", () => import("../helpers/mockDocumentNumber"));
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { BankAccountService } from "@/server/services/BankAccountService";
 import { BankTransferService } from "@/server/services/BankTransferService";
@@ -12,6 +13,7 @@ import { db } from "@/db/client";
 vi.mock("@/db/client", () => ({
   db: {
     $transaction: vi.fn((cb) => cb(db)),
+    $queryRaw: vi.fn().mockResolvedValue([]),
     bankAccount: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -21,6 +23,7 @@ vi.mock("@/db/client", () => ({
       delete: vi.fn(),
     },
     bankTransaction: {
+      createMany: vi.fn(),
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       findMany: vi.fn(),
@@ -241,15 +244,11 @@ describe("Phase 6 — Banking Concurrency & Invariant Verification Suite", () =>
       return [];
     });
 
-    (db.bankTransaction.create as any).mockImplementation(async ({ data }: any) => {
-      if (insertedFingerprints.has(data.fingerprint)) {
-        const err: any = new Error("Unique constraint failed on fingerprint");
-        err.code = "P2002";
-        throw err;
-      }
+    (db.bankTransaction.createMany as any).mockImplementation(async ({ data }: any) => {
+      if (insertedFingerprints.has(data.fingerprint)) return { count: 0 };
       totalImportedRows++;
       insertedFingerprints.add(data.fingerprint);
-      return { id: `tx_${totalImportedRows}`, ...data };
+      return { count: 1 };
     });
 
     (db.bankImportBatch.create as any).mockImplementation(async ({ data }: any) => ({
@@ -347,6 +346,8 @@ describe("Phase 6 — Banking Concurrency & Invariant Verification Suite", () =>
       organizationId: "org_A",
       reconciliationNumber: "REC-2026-00001",
       difference: 0.0,
+      statementBeginningBalance: 0,
+      statementEndingBalance: 0,
       status: "OPEN",
     };
 

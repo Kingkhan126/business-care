@@ -13,6 +13,18 @@ import { UpdateOrganizationProfileInput } from "@/lib/validation/organization_se
 import { UpdateOrganizationSettingsInput } from "@/lib/validation/organization_settings";
 
 export class OrganizationService {
+  /** Workspace identity is available to every active member, including restricted roles. */
+  static async getWorkspaceSummary(user: SessionUser) {
+    if (!user.activeOrganizationId) throw new NotFoundError("No active organization selected");
+    assertTenantAccess(user, user.activeOrganizationId);
+    const organization = await db.organization.findUnique({
+      where: { id: user.activeOrganizationId },
+      select: { name: true, currency: true, timezone: true },
+    });
+    if (!organization) throw new NotFoundError("Organization not found");
+    return organization;
+  }
+
   static async getOrganization(user: SessionUser) {
     if (!user.activeOrganizationId) {
       throw new NotFoundError("No active organization selected");

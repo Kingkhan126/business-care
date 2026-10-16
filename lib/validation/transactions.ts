@@ -1,3 +1,4 @@
+import { validDate } from "./query";
 import { z } from "zod";
 
 export const TransactionLineSchema = z.object({
@@ -17,8 +18,8 @@ export type TransactionLineInput = z.input<typeof TransactionLineSchema>;
 // ESTIMATES
 export const EstimateSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
-  issueDate: z.string().or(z.date()),
-  expiryDate: z.string().or(z.date()).optional().nullable(),
+  issueDate: validDate,
+  expiryDate: validDate.optional().nullable(),
   currency: z.string().min(3).max(3).default("USD"),
   notes: z.string().optional().nullable(),
   terms: z.string().optional().nullable(),
@@ -31,8 +32,8 @@ export type EstimateInput = z.input<typeof EstimateSchema>;
 export const SalesOrderSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
   sourceEstimateId: z.string().optional().nullable(),
-  orderDate: z.string().or(z.date()),
-  expectedDeliveryDate: z.string().or(z.date()).optional().nullable(),
+  orderDate: validDate,
+  expectedDeliveryDate: validDate.optional().nullable(),
   currency: z.string().min(3).max(3).default("USD"),
   notes: z.string().optional().nullable(),
   terms: z.string().optional().nullable(),
@@ -46,8 +47,8 @@ export const SalesInvoiceSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
   sourceSalesOrderId: z.string().optional().nullable(),
   warehouseId: z.string().optional().nullable(),
-  issueDate: z.string().or(z.date()),
-  dueDate: z.string().or(z.date()),
+  issueDate: validDate,
+  dueDate: validDate,
   currency: z.string().min(3).max(3).default("USD"),
   notes: z.string().optional().nullable(),
   terms: z.string().optional().nullable(),
@@ -59,7 +60,7 @@ export type SalesInvoiceInput = z.input<typeof SalesInvoiceSchema>;
 // CUSTOMER PAYMENTS
 export const CustomerPaymentSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
-  paymentDate: z.string().or(z.date()),
+  paymentDate: validDate,
   amount: z.number().positive("Payment amount must be greater than zero"),
   currency: z.string().min(3).max(3).default("USD"),
   paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CARD", "CHEQUE", "OTHER"]).default("BANK_TRANSFER"),
@@ -81,7 +82,7 @@ export const CreditNoteSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
   sourceInvoiceId: z.string().optional().nullable(),
   warehouseId: z.string().optional().nullable(),
-  issueDate: z.string().or(z.date()),
+  issueDate: validDate,
   returnToInventory: z.boolean().default(false),
   reason: z.string().min(1, "Reason is required"),
   notes: z.string().optional().nullable(),
@@ -93,8 +94,8 @@ export type CreditNoteInput = z.input<typeof CreditNoteSchema>;
 // PURCHASE ORDERS
 export const PurchaseOrderSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
-  orderDate: z.string().or(z.date()),
-  expectedDate: z.string().or(z.date()).optional().nullable(),
+  orderDate: validDate,
+  expectedDate: validDate.optional().nullable(),
   currency: z.string().min(3).max(3).default("USD"),
   notes: z.string().optional().nullable(),
   terms: z.string().optional().nullable(),
@@ -109,8 +110,8 @@ export const VendorBillSchema = z.object({
   sourcePurchaseOrderId: z.string().optional().nullable(),
   warehouseId: z.string().optional().nullable(),
   vendorBillReference: z.string().optional().nullable(),
-  issueDate: z.string().or(z.date()),
-  dueDate: z.string().or(z.date()),
+  issueDate: validDate,
+  dueDate: validDate,
   currency: z.string().min(3).max(3).default("USD"),
   notes: z.string().optional().nullable(),
   terms: z.string().optional().nullable(),
@@ -122,7 +123,7 @@ export type VendorBillInput = z.input<typeof VendorBillSchema>;
 // VENDOR PAYMENTS
 export const VendorPaymentSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
-  paymentDate: z.string().or(z.date()),
+  paymentDate: validDate,
   amount: z.number().positive("Payment amount must be greater than zero"),
   currency: z.string().min(3).max(3).default("USD"),
   paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CARD", "CHEQUE", "OTHER"]).default("BANK_TRANSFER"),
@@ -143,7 +144,7 @@ export type VendorPaymentAllocationInput = z.input<typeof VendorPaymentAllocatio
 export const VendorCreditSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
   sourceBillId: z.string().optional().nullable(),
-  issueDate: z.string().or(z.date()),
+  issueDate: validDate,
   reason: z.string().min(1, "Reason is required"),
   notes: z.string().optional().nullable(),
   lines: z.array(TransactionLineSchema).min(1, "Vendor credit must contain at least one line item"),

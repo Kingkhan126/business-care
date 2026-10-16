@@ -1,3 +1,5 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
+import { safeUserSelect } from "../repositories/safeUser";
 import { db } from "@/db/client";
 import { ExpenseRepository } from "../repositories/ExpenseRepository";
 import { ExpenseCategoryRepository } from "../repositories/ExpenseCategoryRepository";
@@ -173,18 +175,7 @@ export class ExpenseService {
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
-          const count = await tx.expense.count({
-            where: {
-              organizationId: orgId,
-              expenseDate: {
-                gte: new Date(`${year}-01-01`),
-                lte: new Date(`${year}-12-31T23:59:59.999Z`),
-              },
-            },
-          });
-
-          const sequence = String(count + 1 + attempts).padStart(5, "0");
-          const expenseNumber = `EXP-${year}-${sequence}`;
+          const expenseNumber = await nextDocumentNumber(tx, orgId, "expense", `EXP-${year}-`, 5);
 
           const existing = await tx.expense.findFirst({
             where: { organizationId: orgId, expenseNumber },
@@ -231,7 +222,7 @@ export class ExpenseService {
               lines: { include: { category: true } },
               category: true,
               supplier: true,
-              claimant: true,
+              claimant: { select: safeUserSelect },
               bankAccount: true,
             },
           });
@@ -277,9 +268,7 @@ export class ExpenseService {
 
     return db.$transaction(async (tx) => {
       // Row lock to guard against race conditions
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       const existing = await tx.expense.findFirst({
         where: { id, organizationId: orgId },
@@ -364,7 +353,7 @@ export class ExpenseService {
           lines: { include: { category: true } },
           category: true,
           supplier: true,
-          claimant: true,
+          claimant: { select: safeUserSelect },
           bankAccount: true,
         },
       });
@@ -397,9 +386,7 @@ export class ExpenseService {
     const orgId = user.activeOrganizationId;
 
     return db.$transaction(async (tx) => {
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       const expense = await tx.expense.findFirst({
         where: { id, organizationId: orgId },
@@ -424,7 +411,7 @@ export class ExpenseService {
           status: ExpenseStatus.SUBMITTED,
           rejectionReason: null,
         },
-        include: { lines: true, category: true, claimant: true },
+        include: { lines: true, category: true, claimant: { select: safeUserSelect } },
       });
 
       await tx.auditLog.create({
@@ -451,9 +438,7 @@ export class ExpenseService {
     const orgId = user.activeOrganizationId;
 
     return db.$transaction(async (tx) => {
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "Expense" WHERE id = ${id} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       const expense = await tx.expense.findFirst({
         where: { id, organizationId: orgId },

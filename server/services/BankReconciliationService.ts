@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { BankReconciliationRepository } from "../repositories/BankReconciliationRepository";
 import { BankAccountRepository } from "../repositories/BankAccountRepository";
@@ -73,9 +74,7 @@ export class BankReconciliationService {
 
     return db.$transaction(async (tx) => {
       // Database row lock on the BankAccount to serialize concurrent reconciliation creations
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "BankAccount" WHERE id = ${account.id} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "BankAccount" WHERE id = ${account.id} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       // 1. Check if an open reconciliation already exists for this account
       const existingOpen = await tx.bankReconciliation.findFirst({
@@ -120,9 +119,7 @@ export class BankReconciliationService {
         ? Number(latestCompleted.statementEndingBalance)
         : Number(account.openingBalance);
 
-      const reconciliationNumber = await BankReconciliationRepository.findNextReconciliationNumber(
-        user.activeOrganizationId!
-      );
+      const reconciliationNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "bankReconciliation", `REC-${endDate.getUTCFullYear()}-`, 5);
 
       const initialDifference = CalculationEngine.roundMoney(
         statementEndingBalance - statementBeginningBalance
@@ -224,9 +221,7 @@ export class BankReconciliationService {
 
     return db.$transaction(async (tx) => {
       // Row lock on BankReconciliation to serialize item updates against concurrent completion
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "BankReconciliation" WHERE id = ${reconciliationId} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "BankReconciliation" WHERE id = ${reconciliationId} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       // Re-verify reconciliation is still open under transaction lock
       const currentRec = await tx.bankReconciliation.findUnique({
@@ -333,9 +328,7 @@ export class BankReconciliationService {
 
     return db.$transaction(async (tx) => {
       // Row lock on BankReconciliation to serialize completion against concurrent toggles
-      if (typeof (tx as any).$queryRaw === "function") {
-        await (tx as any).$queryRaw`SELECT id FROM "BankReconciliation" WHERE id = ${reconciliationId} FOR UPDATE`.catch(() => {});
-      }
+      await tx.$queryRaw`SELECT id FROM "BankReconciliation" WHERE id = ${reconciliationId} AND "organizationId" = ${user.activeOrganizationId!} FOR UPDATE`;
 
       // Re-verify status inside transaction to prevent race conditions
       const currentRec = await tx.bankReconciliation.findUnique({

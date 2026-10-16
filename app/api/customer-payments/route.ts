@@ -1,3 +1,5 @@
+import { parsePagination } from "@/lib/validation/query";
+import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { CustomerPaymentService } from "@/server/services/CustomerPaymentService";
@@ -12,16 +14,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get("customerId") || undefined;
     const search = searchParams.get("search") || undefined;
-    const skip = searchParams.get("skip") ? parseInt(searchParams.get("skip")!, 10) : undefined;
-    const take = searchParams.get("take") ? parseInt(searchParams.get("take")!, 10) : undefined;
+    const { skip, take } = parsePagination(searchParams);
 
     const result = await CustomerPaymentService.list(user, { customerId, search, skip, take });
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
@@ -36,9 +34,6 @@ export async function POST(request: Request) {
     const payment = await CustomerPaymentService.recordPayment(user, validated);
     return NextResponse.json(payment, { status: 201 });
   } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

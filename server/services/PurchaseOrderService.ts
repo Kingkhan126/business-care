@@ -1,3 +1,5 @@
+import { validateTransactionReferences } from "./TransactionReferenceService";
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { PurchaseOrderRepository } from "../repositories/PurchaseOrderRepository";
 import { SupplierRepository } from "../repositories/SupplierRepository";
@@ -62,8 +64,8 @@ export class PurchaseOrderService {
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
-          const count = await tx.purchaseOrder.count({ where: { organizationId: user.activeOrganizationId! } });
-          const purchaseOrderNumber = `PO-${String(count + 1 + attempts).padStart(6, "0")}`;
+          await validateTransactionReferences(tx, user.activeOrganizationId!, input);
+          const purchaseOrderNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "purchaseOrder", "PO-", 6);
 
           const existing = await tx.purchaseOrder.findFirst({
             where: { purchaseOrderNumber, organizationId: user.activeOrganizationId! },
@@ -159,8 +161,7 @@ export class PurchaseOrderService {
       let attempts = 0;
       let billNumber = "";
       while (attempts < 5) {
-        const count = await tx.vendorBill.count({ where: { organizationId: user.activeOrganizationId! } });
-        billNumber = `BILL-${String(count + 1 + attempts).padStart(6, "0")}`;
+        billNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "vendorBill", "BILL-", 6);
         const existing = await tx.vendorBill.findFirst({
           where: { billNumber, organizationId: user.activeOrganizationId! },
         });

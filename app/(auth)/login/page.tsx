@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 import * as React from "react";
 import Link from "next/link";
@@ -48,8 +49,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <div className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-md border border-slate-200">
-            <img
-              src="/logo.jpg"
+            <Image
+              src="/logo.jpg" width={64} height={64}
               alt="AD CARE & MEDS PHARMACY"
               className="h-full w-full object-contain rounded-xl"
             />
@@ -90,7 +91,7 @@ export default function LoginPage() {
               <Input
                 label="Password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 leftIcon={<Lock className="h-4 w-4" />}

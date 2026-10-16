@@ -13,6 +13,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Allocated inside the same transaction as the document; never reused after deletion.
+model DocumentSequence {
+  organizationId String
+  kind           String
+  prefix         String
+  value          BigInt
+
+  @@id([organizationId, kind, prefix])
+}
+
 // ----------------------------------------------------------------------------
 // ENUMS
 // ----------------------------------------------------------------------------

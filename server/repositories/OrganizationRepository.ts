@@ -1,3 +1,4 @@
+import { safeUserSelect } from "./safeUser";
 import { db } from "@/db/client";
 import { Organization, Prisma } from "@prisma/client";
 
@@ -8,7 +9,7 @@ export class OrganizationRepository {
       include: {
         members: {
           include: {
-            user: true,
+            user: { select: safeUserSelect },
             role: true,
           },
         },

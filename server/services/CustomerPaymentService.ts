@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { CustomerPaymentRepository } from "../repositories/CustomerPaymentRepository";
 import { CustomerRepository } from "../repositories/CustomerRepository";
@@ -53,8 +54,7 @@ export class CustomerPaymentService {
     while (attempts < maxAttempts) {
       try {
         return await db.$transaction(async (tx) => {
-          const count = await tx.customerPayment.count({ where: { organizationId: user.activeOrganizationId! } });
-          const paymentNumber = `PAY-${String(count + 1 + attempts).padStart(6, "0")}`;
+          const paymentNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "customerPayment", "PAY-", 6);
 
           const existing = await tx.customerPayment.findFirst({
             where: { paymentNumber, organizationId: user.activeOrganizationId! },

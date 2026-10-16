@@ -1,3 +1,4 @@
+import { nextDocumentNumber } from "./DocumentNumberService";
 import { db } from "@/db/client";
 import { CustomerRepository } from "../repositories/CustomerRepository";
 import { AuditRepository } from "../repositories/AuditRepository";
@@ -52,38 +53,7 @@ export class CustomerService {
         return await db.$transaction(async (tx) => {
           let customerNumber = input.customerNumber?.trim();
           if (!customerNumber) {
-            if (attempts >= 15) {
-              // Safe fallback guaranteeing uniqueness
-              customerNumber = `CUS-${Date.now().toString().slice(-6)}${attempts}`;
-            } else {
-              let maxSeq = 0;
-              if (typeof tx.customer?.findMany === "function") {
-                const existingCustomers = await tx.customer.findMany({
-                  where: {
-                    organizationId: user.activeOrganizationId!,
-                    customerNumber: { startsWith: "CUS-" },
-                  },
-                  select: { customerNumber: true },
-                });
-                if (Array.isArray(existingCustomers)) {
-                  for (const c of existingCustomers) {
-                    const match = c.customerNumber?.match(/^CUS-(\d+)$/);
-                    if (match) {
-                      const seq = parseInt(match[1], 10);
-                      if (!isNaN(seq) && seq > maxSeq) {
-                        maxSeq = seq;
-                      }
-                    }
-                  }
-                }
-              }
-              if (maxSeq === 0) {
-                const count = await tx.customer.count({ where: { organizationId: user.activeOrganizationId! } });
-                maxSeq = count;
-              }
-              const candidateSeq = maxSeq + 1 + attempts;
-              customerNumber = `CUS-${String(candidateSeq).padStart(6, "0")}`;
-            }
+            customerNumber = await nextDocumentNumber(tx, user.activeOrganizationId!, "customer", "CUS-");
           }
 
           const existing = await tx.customer.findFirst({

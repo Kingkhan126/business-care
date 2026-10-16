@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 export interface DomainCardsGridProps {
+  currency?: string;
   invoicesCount: number;
   receivablesBalance: number;
   expensesCount: number;
@@ -19,6 +20,7 @@ export interface DomainCardsGridProps {
 }
 
 export function DomainCardsGrid({
+  currency = "USD",
   invoicesCount,
   receivablesBalance,
   expensesCount,
@@ -32,7 +34,7 @@ export function DomainCardsGrid({
       title: "Sales & Receivables",
       href: "/invoices",
       icon: TrendingUp,
-      value: `PKR ${receivablesBalance.toFixed(2)}`,
+      value: `${currency} ${receivablesBalance.toFixed(2)}`,
       badge: `${invoicesCount} Invoices`,
       description: "Sales invoices, receivables ledger, and customer payment allocations.",
       accent: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
@@ -41,7 +43,7 @@ export function DomainCardsGrid({
       title: "Expenses & Payables",
       href: "/expenses",
       icon: PieChart,
-      value: `PKR ${expensesTotal.toFixed(2)}`,
+      value: `${currency} ${expensesTotal.toFixed(2)}`,
       badge: `${expensesCount} Records`,
       description: "Operating expenditures, employee reimbursement claims, and approval workflows.",
       accent: "text-rose-400 bg-rose-500/10 border-rose-500/20",
@@ -50,7 +52,7 @@ export function DomainCardsGrid({
       title: "Cash Flow & Banking",
       href: "/banking",
       icon: CreditCard,
-      value: `PKR ${liquidCash.toFixed(2)}`,
+      value: `${currency} ${liquidCash.toFixed(2)}`,
       badge: `${bankAccountsCount} Accounts`,
       description: "Multi-currency bank accounts, statement reconciliation, and cash transactions.",
       accent: "text-sky-400 bg-sky-500/10 border-sky-500/20",
@@ -61,7 +63,7 @@ export function DomainCardsGrid({
       icon: Boxes,
       value: `${productsCount} Items`,
       badge: "Catalog Active",
-      description: "Stock tracking, FIFO revaluation, warehouses, and product master data.",
+      description: "Stock tracking, warehouses, and product master data.",
       accent: "text-amber-400 bg-amber-500/10 border-amber-500/20",
     },
   ];
