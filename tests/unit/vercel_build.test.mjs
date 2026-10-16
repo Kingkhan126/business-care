@@ -1,11 +1,42 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
 import { missingForeignKeyStatements, runVercelBuild } from "../../scripts/vercel-build.mjs";
 
 vi.mock("node:child_process", () => ({ spawnSync: vi.fn() }));
-beforeEach(() => { vi.resetAllMocks(); spawnSync.mockReturnValue({ status: 0 }); });
+beforeEach(() => {
+  vi.resetAllMocks();
+  spawnSync.mockReturnValue({ status: 0 });
+  vi.spyOn(Atomics, "wait").mockReturnValue("timed-out");
+});
+afterEach(() => vi.restoreAllMocks());
 
 describe("Vercel release migration gate", () => {
+  const lockError = { status: 1, stderr: "Error: \u001b[31mP1002\u001b[0m\nTimed out trying to acquire a postgres advisory lock (SELECT pg_advisory_lock(72707369))." };
+
+  it("retries migration lock contention and builds after the other deployment releases its lock", () => {
+    spawnSync.mockReturnValueOnce({ status: 0 }).mockReturnValueOnce(lockError)
+      .mockReturnValueOnce(lockError).mockReturnValueOnce({ status: 0 });
+    expect(runVercelBuild({ DATABASE_URL: "test-url" })).toBe(0);
+    expect(Atomics.wait).toHaveBeenCalledTimes(2);
+    expect(spawnSync.mock.calls.slice(1, 4).every(([, args]) => args[2] === "deploy")).toBe(true);
+    expect(spawnSync.mock.calls[4][1]).toEqual(["node_modules/next/dist/bin/next", "build"]);
+  });
+
+  it("stops after five lock timeouts and does not publish an unmigrated build", () => {
+    spawnSync.mockReturnValue(lockError).mockReturnValueOnce({ status: 0 });
+    expect(runVercelBuild({ DATABASE_URL: "test-url" })).toBe(1);
+    expect(spawnSync).toHaveBeenCalledTimes(6);
+    expect(Atomics.wait).toHaveBeenCalledTimes(4);
+    expect(spawnSync.mock.calls.some(([, args]) => args.includes("node_modules/next/dist/bin/next"))).toBe(false);
+  });
+
+  it("does not retry unrelated database timeouts", () => {
+    spawnSync.mockReturnValueOnce({ status: 0 }).mockReturnValueOnce({ status: 1, stderr: "Error: P1002\nConnection timed out" });
+    expect(runVercelBuild({ DATABASE_URL: "test-url" })).toBe(1);
+    expect(spawnSync).toHaveBeenCalledTimes(2);
+    expect(Atomics.wait).not.toHaveBeenCalled();
+  });
+
   it("does not build or publish the new app when its migrations fail", () => {
     spawnSync.mockReturnValueOnce({ status: 0 }).mockReturnValueOnce({ status: 1 });
     expect(runVercelBuild({ DATABASE_URL: "test-url" })).toBe(1);

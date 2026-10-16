@@ -22,13 +22,21 @@ function hasPrismaError(result, code) {
 }
 
 function prisma(args, env, input) {
-  const result = spawnSync(process.execPath, ["node_modules/prisma/build/index.js", ...args], {
-    env, input, stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"], encoding: "utf8",
-  });
-  if (result.error) throw result.error;
-  if (result.stdout) process.stdout.write(result.stdout);
-  if (result.stderr) process.stderr.write(result.stderr);
-  return result;
+  const attempts = args[0] === "migrate" && ["deploy", "resolve"].includes(args[1]) ? 5 : 1;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const result = spawnSync(process.execPath, ["node_modules/prisma/build/index.js", ...args], {
+      env, input, stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"], encoding: "utf8",
+    });
+    if (result.error) throw result.error;
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+    const output = stripVTControlCharacters(`${result.stdout || ""}\n${result.stderr || ""}`);
+    const lockTimeout = hasPrismaError(result, "P1002") && /advisory lock|pg_advisory_lock/i.test(output);
+    if (result.status === 0 || !lockTimeout || attempt === attempts) return result;
+    const delay = attempt * 2000 + Math.floor(Math.random() * 1000);
+    console.log(`Another deployment holds the migration lock. Retrying in ${delay}ms (${attempt + 1}/${attempts}).`);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delay);
+  }
 }
 
 function compareBaseline(env, script = false) {
