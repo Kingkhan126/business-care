@@ -69,7 +69,7 @@ export default function ExpenseCategoriesPage() {
       const res = await fetch("/api/expenses/categories?includeInactive=true");
       if (!res.ok) throw new Error("Failed to load categories");
       const data = await res.json();
-      setCategories(data || []);
+      setCategories(Array.isArray(data.items) ? data.items : []);
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to load categories");
     } finally {
@@ -83,7 +83,7 @@ export default function ExpenseCategoriesPage() {
       const res = await fetch("/api/accounting/accounts");
       if (res.ok) {
         const json = await res.json();
-        setAccounts(json.data || []);
+        setAccounts(Array.isArray(json.data?.items) ? json.data.items : []);
       }
     } catch (e) {
       console.error("Failed to load accounts", e);

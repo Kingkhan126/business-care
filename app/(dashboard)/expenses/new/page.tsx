@@ -81,7 +81,7 @@ export default function CreateExpensePage() {
 
         if (catRes.ok) {
           const cats = await catRes.json();
-          setCategories(cats || []);
+          setCategories(Array.isArray(cats.items) ? cats.items : []);
         }
         if (suppRes.ok) {
           const supps = await suppRes.json();
@@ -89,7 +89,7 @@ export default function CreateExpensePage() {
         }
         if (bankRes.ok) {
           const banks = await bankRes.json();
-          setBankAccounts(banks.data || []);
+          setBankAccounts(Array.isArray(banks.data?.items) ? banks.data.items : []);
         }
         if (orgRes.ok) {
           const org = await orgRes.json();

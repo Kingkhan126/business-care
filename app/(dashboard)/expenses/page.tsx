@@ -123,7 +123,7 @@ export default function ExpensesDashboardPage() {
       const res = await fetch("/api/expenses/categories");
       if (res.ok) {
         const data = await res.json();
-        setCategories(data || []);
+        setCategories(Array.isArray(data.items) ? data.items : []);
       }
     } catch (err) {
       console.error("Failed to load categories", err);
