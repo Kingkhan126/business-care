@@ -38,7 +38,7 @@ describe("Existing database migration adoption", () => {
 
   it("baselines matching existing tables, applies the new migration, and preserves records", async () => {
     const { env, client } = clients[0];
-    const result = run(["scripts/vercel-build.mjs", "--migrate-only"], env);
+    const result = run(["scripts/vercel-build.mjs", "--migrate-only"], { ...env, FORCE_COLOR: "1" });
     expect(result.status, result.stdout + result.stderr).toBe(0);
     expect(await client.user.count()).toBe(1);
     expect(await client.user.findUnique({ where: { email: "preserved@test.invalid" } })).not.toBeNull();

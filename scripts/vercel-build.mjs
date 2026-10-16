@@ -1,6 +1,12 @@
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { stripVTControlCharacters } from "node:util";
+
+function hasPrismaError(result, code) {
+  const output = stripVTControlCharacters(`${result.stdout || ""}\n${result.stderr || ""}`);
+  return new RegExp(`\\b${code}\\b`).test(output);
+}
 
 function prisma(args, env) {
   const result = spawnSync(process.execPath, ["node_modules/prisma/build/index.js", ...args], {
@@ -17,7 +23,7 @@ export function deployMigrations(env = process.env) {
   const migrationEnv = env.DIRECT_URL ? { ...env, DATABASE_URL: env.DIRECT_URL } : env;
   const deployed = prisma(["migrate", "deploy"], migrationEnv);
   if (deployed.status === 0) return 0;
-  if (!/\bP3005\b/.test(`${deployed.stdout || ""}\n${deployed.stderr || ""}`)) return deployed.status || 1;
+  if (!hasPrismaError(deployed, "P3005")) return deployed.status || 1;
 
   console.log("Existing database detected. Verifying the initial schema before recording its migration history.");
   const diff = prisma([
@@ -35,7 +41,7 @@ export function deployMigrations(env = process.env) {
 
   const baseline = prisma(["migrate", "resolve", "--applied", "0_init"], migrationEnv);
   // Concurrent deployments sharing this database may have recorded it first.
-  if (baseline.status !== 0 && !/\bP3008\b/.test(`${baseline.stdout || ""}\n${baseline.stderr || ""}`)) return baseline.status || 1;
+  if (baseline.status !== 0 && !hasPrismaError(baseline, "P3008")) return baseline.status || 1;
   const migrated = prisma(["migrate", "deploy"], migrationEnv);
   return migrated.status === 0 ? 0 : migrated.status || 1;
 }
