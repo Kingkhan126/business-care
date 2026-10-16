@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/client";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   let databaseConnected = false;
   try {
