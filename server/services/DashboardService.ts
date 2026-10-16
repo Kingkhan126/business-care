@@ -12,7 +12,7 @@ export class DashboardService {
     if (!user.activeOrganizationId) throw new NotFoundError("No active organization selected");
     const organizationId = user.activeOrganizationId;
     const organization = await db.organization.findUnique({
-      where: { id: organizationId }, select: { name: true, currency: true, timezone: true },
+      where: { id: organizationId }, select: { name: true, logoUrl: true, currency: true, timezone: true },
     });
     if (!organization) throw new NotFoundError("Organization not found");
     const { currency } = organization;

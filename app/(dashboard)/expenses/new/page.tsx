@@ -18,6 +18,7 @@ import {
   FileText,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { useWorkspaceCurrency } from "@/components/layout/WorkspaceCurrency";
 
 interface LineItemState {
   categoryId?: string;
@@ -46,7 +47,7 @@ export default function CreateExpensePage() {
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const currency = useWorkspaceCurrency();
   const [claimantId, setClaimantId] = useState("");
   const [supplierId, setSupplierId] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
@@ -492,7 +493,7 @@ export default function CreateExpensePage() {
                         />
                       </td>
                       <td className="py-2 px-3 text-right font-semibold text-slate-800 font-mono">
-                        {formatCurrency(lineTotal)}
+                        {formatCurrency(lineTotal, currency)}
                       </td>
                       <td className="py-2 px-2 text-center">
                         {lines.length > 1 && (
@@ -518,15 +519,15 @@ export default function CreateExpensePage() {
             <div className="w-64 space-y-1.5 text-xs">
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal Preview:</span>
-                <span className="font-mono font-medium">{formatCurrency(previewTotals.subtotal)}</span>
+                <span className="font-mono font-medium">{formatCurrency(previewTotals.subtotal, currency)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Tax Total Preview:</span>
-                <span className="font-mono font-medium">{formatCurrency(previewTotals.taxTotal)}</span>
+                <span className="font-mono font-medium">{formatCurrency(previewTotals.taxTotal, currency)}</span>
               </div>
               <div className="flex justify-between text-slate-900 font-bold text-sm pt-1 border-t border-slate-200">
                 <span>Grand Total:</span>
-                <span className="font-mono text-indigo-700">{formatCurrency(previewTotals.total)}</span>
+                <span className="font-mono text-indigo-700">{formatCurrency(previewTotals.total, currency)}</span>
               </div>
             </div>
           </div>

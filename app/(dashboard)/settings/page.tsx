@@ -29,8 +29,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -60,7 +62,7 @@ export default function SettingsPage() {
     dateFormat: "YYYY-MM-DD",
     timeFormat: "24h",
     numberFormat: "comma_dot",
-    currency: "USD",
+    currency: "PKR",
     timezone: "UTC",
     fiscalYearStart: 1,
     taxInclusivePricing: false,
@@ -136,7 +138,7 @@ export default function SettingsPage() {
           dateFormat: s.dateFormat || "YYYY-MM-DD",
           timeFormat: s.timeFormat || "24h",
           numberFormat: s.numberFormat || "comma_dot",
-          currency: s.currency || "USD",
+          currency: s.currency || "PKR",
           timezone: s.timezone || "UTC",
           fiscalYearStart: s.fiscalYearStart || 1,
           taxInclusivePricing: Boolean(s.taxInclusivePricing),
@@ -189,6 +191,7 @@ export default function SettingsPage() {
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to update profile");
 
       setSuccess("Organization profile updated successfully.");
+      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
@@ -214,6 +217,7 @@ export default function SettingsPage() {
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to update settings");
 
       setSuccess("Regional and financial settings saved successfully.");
+      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to update settings");
     } finally {
@@ -243,6 +247,7 @@ export default function SettingsPage() {
 
       setProfile({ ...profile, logoUrl: data.logoUrl });
       setSuccess("Organization logo updated successfully.");
+      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to upload logo");
     } finally {
@@ -262,6 +267,7 @@ export default function SettingsPage() {
 
       setProfile({ ...profile, logoUrl: "" });
       setSuccess("Organization logo removed.");
+      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to remove logo");
     } finally {

@@ -77,7 +77,15 @@ export class OrganizationService {
     assertTenantAccess(user, user.activeOrganizationId);
     requirePermission(user, "organization.view");
 
-    return OrganizationSettingsRepository.findByOrganizationId(user.activeOrganizationId);
+    const [settings, organization] = await Promise.all([
+      OrganizationSettingsRepository.findByOrganizationId(user.activeOrganizationId),
+      db.organization.findUnique({
+        where: { id: user.activeOrganizationId },
+        select: { currency: true, timezone: true, fiscalYearStart: true },
+      }),
+    ]);
+    if (!organization) throw new NotFoundError("Organization not found");
+    return { ...settings, ...organization };
   }
 
   static async updateSettings(user: SessionUser, input: UpdateOrganizationSettingsInput) {

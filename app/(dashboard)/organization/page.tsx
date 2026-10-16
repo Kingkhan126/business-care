@@ -22,7 +22,7 @@ export default function OrganizationPage() {
     email: "",
     phone: "",
     website: "",
-    currency: "USD",
+    currency: "PKR",
     timezone: "UTC",
     addressLine1: "",
     addressLine2: "",
@@ -48,7 +48,7 @@ export default function OrganizationPage() {
             email: org.email || "",
             phone: org.phone || "",
             website: org.website || "",
-            currency: org.currency || "USD",
+            currency: org.currency || "PKR",
             timezone: org.timezone || "UTC",
             addressLine1: org.addressLine1 || "",
             addressLine2: org.addressLine2 || "",
@@ -179,6 +179,7 @@ export default function OrganizationPage() {
                   value={form.currency}
                   onChange={(e) => setForm({ ...form, currency: e.target.value })}
                   options={[
+                    { label: "PKR - Pakistani Rupee (Rs)", value: "PKR" },
                     { label: "USD - US Dollar ($)", value: "USD" },
                     { label: "EUR - Euro (€)", value: "EUR" },
                     { label: "GBP - British Pound (£)", value: "GBP" },

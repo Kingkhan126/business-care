@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useWorkspaceCurrency } from "@/components/layout/WorkspaceCurrency";
 import {
   Landmark,
   Plus,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 export default function BankAccountsPage() {
+  const currency = useWorkspaceCurrency();
   const [accounts, setAccounts] = useState<any[]>([]);
   const [ledgerAccounts, setLedgerAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ export default function BankAccountsPage() {
     institutionName: "",
     accountNumberMasked: "",
     routingNumber: "",
-    currency: "USD",
+    currency,
     openingBalance: 0,
     openingBalanceDate: new Date().toISOString().split("T")[0],
     linkedLedgerAccountId: "",
@@ -104,7 +106,7 @@ export default function BankAccountsPage() {
         institutionName: "",
         accountNumberMasked: "",
         routingNumber: "",
-        currency: "USD",
+        currency,
         openingBalance: 0,
         openingBalanceDate: new Date().toISOString().split("T")[0],
         linkedLedgerAccountId: "",

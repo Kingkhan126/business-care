@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   ].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 8);
   return (
     <div className="space-y-6">
-      <HeroBanner organizationName={organization.name} roleName={user.roleName || "Member"} permissions={user.permissions} />
+      <HeroBanner organizationName={organization.name} logoUrl={organization.logoUrl} roleName={user.roleName || "Member"} permissions={user.permissions} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {access.reports && <>
           <MetricCard title="Revenue" value={format(data.totalRevenue)} subtitle="All-time ledger revenue" icon={TrendingUp} accent="emerald" href="/accounting/profit-loss" />

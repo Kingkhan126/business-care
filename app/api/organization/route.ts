@@ -2,7 +2,7 @@ import { apiErrorResponse } from "@/lib/errors/http";
 import { NextResponse } from "next/server";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { OrganizationService } from "@/server/services/OrganizationService";
-import { UpdateOrganizationProfileSchema } from "@/lib/validation/organization_settings";
+import { UpdateOrganizationSchema } from "@/lib/validation/organization";
 import { AppError } from "@/lib/errors";
 
 export async function GET() {
@@ -27,7 +27,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const validated = UpdateOrganizationProfileSchema.parse(body);
+    const validated = UpdateOrganizationSchema.parse(body);
 
     const updatedOrg = await OrganizationService.updateProfile(user, validated);
     return NextResponse.json({ success: true, organization: updatedOrg });

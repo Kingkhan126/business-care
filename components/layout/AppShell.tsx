@@ -4,6 +4,7 @@ import * as React from "react";
 import { SessionUser } from "@/types/auth";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { WorkspaceCurrencyContext } from "./WorkspaceCurrency";
 
 export interface AppShellProps {
   user: SessionUser;
@@ -21,6 +22,7 @@ export function AppShell({
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(false);
 
   return (
+    <WorkspaceCurrencyContext.Provider value={currency || "PKR"}>
     <div className="flex h-screen w-full overflow-hidden bg-transparent text-slate-200 font-sans">
       <Sidebar
         permissions={user.permissions}
@@ -41,5 +43,6 @@ export function AppShell({
         </main>
       </div>
     </div>
+    </WorkspaceCurrencyContext.Provider>
   );
 }

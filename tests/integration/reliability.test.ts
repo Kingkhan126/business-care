@@ -18,6 +18,7 @@ import { AccountingPeriodService } from "@/server/services/AccountingPeriodServi
 import { CustomerService } from "@/server/services/CustomerService";
 import { CustomerSchema } from "@/lib/validation/master_data";
 import { OrganizationService } from "@/server/services/OrganizationService";
+import { UpdateOrganizationSchema } from "@/lib/validation/organization";
 
 describe("PostgreSQL reliability regressions", () => {
   const run = randomUUID();
@@ -42,11 +43,25 @@ describe("PostgreSQL reliability regressions", () => {
       await OrganizationService.uploadLogo(owner, { buffer, filename: "logo.png", mimeType: "image/png", sizeBytes: buffer.length });
       const saved = await db.organization.findUniqueOrThrow({ where: { id: user.activeOrganizationId! } });
       expect(saved.logoUrl).toBe(`data:image/png;base64,${buffer.toString("base64")}`);
+      expect((await DashboardService.getSummary(user)).organization.logoUrl).toBe(saved.logoUrl);
       expect((await db.organization.findUniqueOrThrow({ where: { id: otherOrg } })).logoUrl).toBeNull();
       await OrganizationService.removeLogo(owner);
       expect((await db.organization.findUniqueOrThrow({ where: { id: user.activeOrganizationId! } })).logoUrl).toBeNull();
     } finally {
       vi.unstubAllEnvs();
+    }
+  });
+
+  it("preserves PKR and regional preferences when the organization form is saved and settings are reloaded", async () => {
+    const owner = { ...user, permissions: [...user.permissions, "organization.update", "organization.view"] };
+    const original = await db.organization.findUniqueOrThrow({ where: { id: user.activeOrganizationId! } });
+    try {
+      const input = UpdateOrganizationSchema.parse({ name: original.name, currency: "PKR", timezone: "Asia/Karachi", fiscalYearStart: 7, country: "PK" });
+      await OrganizationService.updateProfile(owner, input);
+      expect(await OrganizationService.getSettings(owner)).toMatchObject({ currency: "PKR", timezone: "Asia/Karachi", fiscalYearStart: 7 });
+      expect((await DashboardService.getSummary(user)).organization.currency).toBe("PKR");
+    } finally {
+      await db.organization.update({ where: { id: original.id }, data: { currency: original.currency, timezone: original.timezone, fiscalYearStart: original.fiscalYearStart, country: original.country } });
     }
   });
 
