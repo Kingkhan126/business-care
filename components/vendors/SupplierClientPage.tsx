@@ -251,7 +251,7 @@ export function SupplierClientPage({ initialSuppliers }: SupplierClientPageProps
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium text-slate-900">{s.displayName}</span>
+                        <span className="font-medium text-white">{s.displayName}</span>
                         {s.legalName && <span className="text-[11px] text-slate-400">{s.legalName}</span>}
                       </div>
                     </TableCell>
