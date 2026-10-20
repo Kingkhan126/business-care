@@ -202,7 +202,9 @@ export default function InvoicesPage() {
       fetchData();
 
       // Automatically open Print & Share modal for instant customer handoff
-      setPrintInvoice(createdInvoice);
+      // Load the same branding, cashier and payment data as the saved-invoice preview.
+      const detailResponse = await fetch(`/api/invoices/${createdInvoice.id}`).catch(() => null);
+      setPrintInvoice(detailResponse?.ok ? await detailResponse.json() : createdInvoice);
       setIsPrintModalOpen(true);
     } catch (err: any) {
       setError(err.message);

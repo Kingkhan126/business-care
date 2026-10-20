@@ -7,6 +7,7 @@ export class InvoiceRepository {
       where: { id, organizationId },
       include: {
         organization: { select: { name: true, logoUrl: true } },
+        createdBy: { select: { name: true } },
         customer: true,
         sourceSalesOrder: true,
         warehouse: true,

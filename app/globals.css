@@ -239,10 +239,32 @@ body {
     padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    border: none !important;
+    border: 1px solid #07356c !important;
     box-shadow: none !important;
     background: #ffffff !important;
     color: #0f172a !important;
+  }
+
+  /* Release the app's scroll containers and print only the open invoice.
+     Keep ancestors in normal flow so tables can paginate across A4 pages. */
+  body:has(#invoice-printable-area) *:not(:has(#invoice-printable-area)):not(#invoice-printable-area):not(#invoice-printable-area *) {
+    display: none !important;
+  }
+
+  body:has(#invoice-printable-area) *:has(#invoice-printable-area) {
+    display: block !important;
+    position: static !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
   }
 }
 

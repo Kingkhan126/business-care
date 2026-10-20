@@ -12,7 +12,7 @@ describe("Conditional invoice branding", () => {
   it.each([null, undefined, "", "  ", "javascript:alert(1)", "file:///logo.png", "broken-path", "data:text/html;base64,aGVsbG8=", "//example.test/logo.png", "/uploads/logos/../other/logo.png"])("omits unsupported logo reference %s without a placeholder", logoUrl => {
     expect(invoiceLogoSource(logoUrl)).toBeNull();
     const html = renderToStaticMarkup(React.createElement(InvoiceDocument, { invoice: { ...invoice, organization: { name: "Tenant", logoUrl } } }));
-    expect(html).not.toContain("<img");
+    expect(html).not.toContain("data-invoice-logo");
     expect(html).not.toContain("M38 10");
     expect(html).toContain("INV-001");
     expect(html).toContain("500.00");
@@ -22,7 +22,7 @@ describe("Conditional invoice branding", () => {
     const html = renderToStaticMarkup(React.createElement(InvoiceDocument, { invoice: { ...invoice, organization: { name: "Tenant", logoUrl } } }));
     expect(html).toContain(`src="${logoUrl}"`);
     expect(html).toContain('alt="Tenant logo"');
-    expect(html.match(/<img/g)).toHaveLength(1);
+    expect(html.match(/data-invoice-logo/g)).toHaveLength(1);
     expect(html.indexOf("data-invoice-logo")).toBeLessThan(html.indexOf("TAX INVOICE"));
   });
 
