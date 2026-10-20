@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { Plus, Search, Receipt } from "lucide-react";
+import { useWorkspaceCurrency } from "@/components/layout/WorkspaceCurrency";
 
 interface Supplier {
   id: string;
@@ -28,6 +29,7 @@ interface BillLine {
 
 interface VendorBill {
   id: string;
+  currency: string;
   billNumber: string;
   supplierId: string;
   issueDate: string;
@@ -41,6 +43,9 @@ interface VendorBill {
 }
 
 export default function VendorBillsPage() {
+  const currency = useWorkspaceCurrency();
+  const formatAmount = (amount: number, code = currency) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: code, currencyDisplay: "code" }).format(amount);
   const [bills, setBills] = useState<VendorBill[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -120,6 +125,7 @@ export default function VendorBillsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           supplierId: selectedSupplier,
+          currency,
           vendorBillReference: vendorBillReference || undefined,
           issueDate,
           dueDate,
@@ -234,8 +240,8 @@ export default function VendorBillsPage() {
                   <td className="px-6 py-4 font-semibold text-indigo-600">{b.billNumber}</td>
                   <td className="px-6 py-4 font-medium text-slate-900">{b.supplier?.displayName}</td>
                   <td className="px-6 py-4">{new Date(b.dueDate).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-900">${Number(b.total).toFixed(2)}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-900">${Number(b.balanceDue).toFixed(2)}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-900">{formatAmount(Number(b.total), b.currency || currency)}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-900">{formatAmount(Number(b.balanceDue), b.currency || currency)}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -345,7 +351,7 @@ export default function VendorBillsPage() {
                         <option value="">Select Item (Optional)...</option>
                         {products.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.name} - Cost: ${Number(p.costPrice).toFixed(2)}
+                            {p.name} - Cost: {formatAmount(Number(p.costPrice))}
                           </option>
                         ))}
                       </select>
